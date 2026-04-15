@@ -42,6 +42,10 @@ app:
     from: ${EMAIL_FROM:noreply@broker.com}
     success-recipient: ${EMAIL_SUCCESS_RECIPIENT:admin@broker.com}
     failure-recipient: ${EMAIL_FAILURE_RECIPIENT:admin@broker.com}
+  retry:
+    max-attempts: ${RETRY_MAX_ATTEMPTS:3}
+    base-delay-seconds: ${RETRY_BASE_DELAY_SECONDS:10}
+    max-delay-seconds: ${RETRY_MAX_DELAY_SECONDS:300}
 
 logging:
   level:
