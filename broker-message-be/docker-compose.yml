@@ -47,6 +47,28 @@ services:
       timeout: 10s
       retries: 5
 
+  mock-services:
+    image: nginx:alpine
+    container_name: broker-mock-services
+    volumes:
+      - ./scripts/mock-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+      - "8082:80"
+      - "8083:80"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: broker-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
   broker-message-be:
     build: .
     container_name: broker-message-be
@@ -55,6 +77,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      mock-services:
+        condition: service_started
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/broker_db
       DB_USERNAME: postgres
@@ -62,14 +86,14 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MAIL_HOST: smtp.gmail.com
       MAIL_PORT: 587
-      MAIL_USERNAME: your-email@gmail.com
-      MAIL_PASSWORD: your-password
-      EMAIL_FROM: noreply@broker.com
-      EMAIL_SUCCESS_RECIPIENT: admin@broker.com
-      EMAIL_FAILURE_RECIPIENT: admin@broker.com
-      PAYMENT_ENDPOINT: http://payment-service:8081/api/payments
-      ORDER_ENDPOINT: http://order-service:8082/api/orders
-      PRODUCT_ENDPOINT: http://product-service:8083/api/products
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_SUCCESS_TO: ${EMAIL_SUCCESS_TO}
+      EMAIL_FAILURE_TO: ${EMAIL_FAILURE_TO}
+      MONGODB_URI: ${MONGODB_URI}
+      PAYMENT_ENDPOINT: http://mock-services/api/payments
+      ORDER_ENDPOINT: http://mock-services/api/orders
+      PRODUCT_ENDPOINT: http://mock-services/api/products
     ports:
       - "8080:8080"
 

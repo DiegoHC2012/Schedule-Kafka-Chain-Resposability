@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Broker Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease-in; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.6s linear infinite; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-700/60 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-base font-bold select-none">⚡</div>
+      <div>
+        <h1 class="text-sm font-bold text-white leading-none">Broker Message Dashboard</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Chain of Responsibility · Kafka Retry Monitor</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div id="health-badge" class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-full px-3 py-1 text-xs">
+        <span id="health-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+        <span id="health-text" class="text-slate-400">Checking…</span>
+      </div>
+      <a href="http://localhost:8090" target="_blank"
+         class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 hover:border-indigo-500/50 hover:bg-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 transition-all">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+        Kafka UI
+      </a>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-500">Auto-refresh</span>
+        <button id="refresh-toggle" onclick="toggleAutoRefresh()"
+                class="w-10 h-5 bg-indigo-600 rounded-full relative cursor-pointer transition-colors border-0 p-0">
+          <span id="toggle-dot"
+                class="absolute top-0.5 right-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 pointer-events-none"></span>
+        </button>
+      </div>
+      <button onclick="loadAll()" title="Refresh now"
+              class="text-slate-400 hover:text-white transition-colors p-1 rounded">
+        <svg id="refresh-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-5 space-y-5">
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-700/60 rounded-xl p-4">
+        <p class="text-xs text-slate-500 uppercase tracking-widest mb-2">Total</p>
+        <p id="stat-total" class="text-3xl font-bold text-white tabular-nums">—</p>
+      </div>
+      <div class="bg-slate-900 border border-yellow-500/25 rounded-xl p-4">
+        <p class="text-xs text-yellow-500 uppercase tracking-widest mb-2">Pending</p>
+        <p id="stat-pending" class="text-3xl font-bold text-yellow-400 tabular-nums">—</p>
+      </div>
+      <div class="bg-slate-900 border border-green-500/25 rounded-xl p-4">
+        <p class="text-xs text-green-500 uppercase tracking-widest mb-2">Completed</p>
+        <p id="stat-completed" class="text-3xl font-bold text-green-400 tabular-nums">—</p>
+      </div>
+      <div class="bg-slate-900 border border-red-500/25 rounded-xl p-4">
+        <p class="text-xs text-red-500 uppercase tracking-widest mb-2">Failed</p>
+        <p id="stat-failed" class="text-3xl font-bold text-red-400 tabular-nums">—</p>
+      </div>
+    </div>
+
+    <!-- Publish Panel -->
+    <div class="bg-slate-900 border border-slate-700/60 rounded-xl p-5">
+      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Publish Message</h2>
+      <form id="publish-form" onsubmit="publishMessage(event)" autocomplete="off">
+
+        <!-- Row 1: Domain -->
+        <div class="mb-4">
+          <label class="text-xs text-slate-500 block mb-1.5">Domain</label>
+          <div class="flex gap-2">
+            <label class="flex-1">
+              <input type="radio" name="domain" value="payment" class="sr-only peer" checked />
+              <div class="text-center border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-600/20 peer-checked:text-indigo-300 rounded-lg px-3 py-2 text-xs text-slate-400 cursor-pointer hover:border-slate-500 transition-all">
+                💳 Payment
+              </div>
+            </label>
+            <label class="flex-1">
+              <input type="radio" name="domain" value="order" class="sr-only peer" />
+              <div class="text-center border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-600/20 peer-checked:text-indigo-300 rounded-lg px-3 py-2 text-xs text-slate-400 cursor-pointer hover:border-slate-500 transition-all">
+                📦 Order
+              </div>
+            </label>
+            <label class="flex-1">
+              <input type="radio" name="domain" value="product" class="sr-only peer" />
+              <div class="text-center border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-600/20 peer-checked:text-indigo-300 rounded-lg px-3 py-2 text-xs text-slate-400 cursor-pointer hover:border-slate-500 transition-all">
+                🛍 Product
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Row 2: ID + Name + Description -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">ID <span class="text-slate-600">(auto si vacío)</span></label>
+            <input name="id" type="text" placeholder="ej. pay-001"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Nombre</label>
+            <input name="name" type="text" placeholder="ej. Laptop Pro"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Descripción</label>
+            <input name="description" type="text" placeholder="ej. Pago de suscripción"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+        </div>
+
+        <!-- Row 3: Price + Qty + Category + Brand + Image -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Precio</label>
+            <input name="price" type="number" step="0.01" min="0" placeholder="99.99"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Cantidad</label>
+            <input name="quantity" type="number" min="1" placeholder="1"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Categoría</label>
+            <input name="category" type="text" placeholder="ej. electronics"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Marca</label>
+            <input name="brand" type="text" placeholder="ej. Apple"
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1.5">Imagen URL</label>
+            <input name="image" type="text" placeholder="https://..."
+                   class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"/>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="submit"
+                  class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-colors">
+            Publicar →
+          </button>
+          <button type="button" onclick="resetForm()"
+                  class="text-slate-500 hover:text-slate-300 text-sm px-3 py-2 rounded-lg transition-colors">
+            Limpiar
+          </button>
+        </div>
+      </form>
+      <div id="publish-result" class="hidden mt-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono"></div>
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="bg-slate-900 border border-slate-700/60 rounded-xl overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-700/60">
+        <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Retry Jobs</h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="filter-status" onchange="applyFilter()"
+                  class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <option value="">All statuses</option>
+            <option value="PENDING">PENDING</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="FAILED">FAILED</option>
+          </select>
+          <select id="filter-domain" onchange="applyFilter()"
+                  class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <option value="">All domains</option>
+            <option value="payments_retry_jobs">Payment</option>
+            <option value="order_retry_jobs">Order</option>
+            <option value="product_retry_jobs">Product</option>
+          </select>
+          <span id="last-updated" class="text-xs text-slate-600 ml-1"></span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="bg-slate-800/40">
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">ID</th>
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Domain</th>
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Status</th>
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Attempts</th>
+              <th class="text-center px-3 py-2.5 text-slate-500 font-medium">Step A</th>
+              <th class="text-center px-3 py-2.5 text-slate-500 font-medium">Step B</th>
+              <th class="text-center px-3 py-2.5 text-slate-500 font-medium">Step C</th>
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Next Retry</th>
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Error</th>
+              <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Created</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-table-body">
+            <tr>
+              <td colspan="10" class="text-center py-16 text-slate-600">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let autoRefresh  = true;
+    let refreshInterval = null;
+    let allJobs = [];
+
+    const TOPIC_META = {
+      payments_retry_jobs: { label: 'Payment', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+      order_retry_jobs:    { label: 'Order',   cls: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
+      product_retry_jobs:  { label: 'Product', cls: 'bg-orange-500/15 text-orange-400 border-orange-500/30' }
+    };
+
+    const STATUS_META = {
+      PENDING:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+      COMPLETED: 'bg-green-500/15 text-green-400 border-green-500/30',
+      FAILED:    'bg-red-500/15 text-red-400 border-red-500/30'
+    };
+
+    function badge(label, cls) {
+      return `<span class="inline-flex items-center rounded-md px-2 py-0.5 border text-xs font-medium ${cls}">${label}</span>`;
+    }
+
+    function stepCell(status) {
+      if (status === 'SUCCESS') return `<span class="text-green-400 font-bold">✓</span>`;
+      if (status === 'FAILED')  return `<span class="text-red-400 font-bold">✗</span>`;
+      return `<span class="text-slate-700">—</span>`;
+    }
+
+    function fmtTime(dt) {
+      if (!dt) return '—';
+      return new Date(dt).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function fmtDateTime(dt) {
+      if (!dt) return '—';
+      const d = new Date(dt);
+      return d.toLocaleDateString('es', { month: '2-digit', day: '2-digit' })
+           + ' ' + d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    async function loadHealth() {
+      try {
+        const r  = await fetch('/actuator/health');
+        const js = await r.json();
+        const dot  = document.getElementById('health-dot');
+        const text = document.getElementById('health-text');
+        if (js.status === 'UP') {
+          dot.className  = 'w-2 h-2 rounded-full bg-green-400';
+          text.textContent = 'Healthy';
+          text.className = 'text-green-400';
+        } else {
+          dot.className  = 'w-2 h-2 rounded-full bg-yellow-400';
+          text.textContent = js.status;
+          text.className = 'text-yellow-400';
+        }
+      } catch {
+        document.getElementById('health-dot').className  = 'w-2 h-2 rounded-full bg-red-500';
+        document.getElementById('health-text').textContent = 'Unreachable';
+        document.getElementById('health-text').className  = 'text-red-400';
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const stats = await fetch('/api/retry-jobs/stats').then(r => r.json());
+        document.getElementById('stat-total').textContent     = stats.total;
+        document.getElementById('stat-pending').textContent   = stats.pending;
+        document.getElementById('stat-completed').textContent = stats.completed;
+        document.getElementById('stat-failed').textContent    = stats.failed;
+      } catch { /* silently ignore */ }
+    }
+
+    async function loadJobs() {
+      try {
+        allJobs = await fetch('/api/retry-jobs?size=100').then(r => r.json());
+        applyFilter();
+        document.getElementById('last-updated').textContent =
+          'Updated ' + new Date().toLocaleTimeString('es');
+      } catch {
+        document.getElementById('jobs-table-body').innerHTML =
+          '<tr><td colspan="10" class="text-center py-10 text-red-400/70">Error fetching jobs — is the app running?</td></tr>';
+      }
+    }
+
+    function applyFilter() {
+      const statusF = document.getElementById('filter-status').value;
+      const domainF = document.getElementById('filter-domain').value;
+      const filtered = allJobs.filter(j =>
+        (!statusF || j.status === statusF) &&
+        (!domainF || j.topic  === domainF)
+      );
+      renderTable(filtered);
+    }
+
+    function renderTable(jobs) {
+      const tbody = document.getElementById('jobs-table-body');
+      if (!jobs.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-16 text-slate-600">No jobs found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = jobs.map(j => {
+        const tm  = TOPIC_META[j.topic]  || { label: j.topic,  cls: 'bg-slate-500/15 text-slate-400 border-slate-500/30' };
+        const sm  = STATUS_META[j.status] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+        const shortId = j.id ? j.id.substring(0, 8) + '…' : '—';
+        const err = j.errorMessage
+          ? `<span title="${j.errorMessage.replace(/"/g, '&quot;')}" class="text-red-400/70">${j.errorMessage.substring(0, 55)}${j.errorMessage.length > 55 ? '…' : ''}</span>`
+          : '<span class="text-slate-700">—</span>';
+
+        return `<tr class="border-t border-slate-800/80 hover:bg-slate-800/40 transition-colors fade-in">
+          <td class="px-4 py-2.5 font-mono text-slate-500" title="${j.id || ''}">${shortId}</td>
+          <td class="px-4 py-2.5">${badge(tm.label, tm.cls)}</td>
+          <td class="px-4 py-2.5">${badge(j.status, sm)}</td>
+          <td class="px-4 py-2.5 text-slate-300 tabular-nums">${j.attemptCount}<span class="text-slate-600">/${j.maxAttempts}</span></td>
+          <td class="px-3 py-2.5 text-center">${stepCell(j.stepAStatus)}</td>
+          <td class="px-3 py-2.5 text-center">${stepCell(j.stepBStatus)}</td>
+          <td class="px-3 py-2.5 text-center">${stepCell(j.stepCStatus)}</td>
+          <td class="px-4 py-2.5 text-slate-500 tabular-nums">${fmtTime(j.nextRetryAt)}</td>
+          <td class="px-4 py-2.5 max-w-xs">${err}</td>
+          <td class="px-4 py-2.5 text-slate-600 tabular-nums">${fmtDateTime(j.createdAt)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function loadAll() {
+      const icon = document.getElementById('refresh-icon');
+      icon.classList.add('spin');
+      await Promise.all([loadHealth(), loadStats(), loadJobs()]);
+      setTimeout(() => icon.classList.remove('spin'), 400);
+    }
+
+    function toggleAutoRefresh() {
+      autoRefresh = !autoRefresh;
+      const btn = document.getElementById('refresh-toggle');
+      const dot = document.getElementById('toggle-dot');
+      if (autoRefresh) {
+        btn.className = 'w-10 h-5 bg-indigo-600 rounded-full relative cursor-pointer transition-colors border-0 p-0';
+        dot.className = 'absolute top-0.5 right-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 pointer-events-none';
+        startInterval();
+      } else {
+        btn.className = 'w-10 h-5 bg-slate-600 rounded-full relative cursor-pointer transition-colors border-0 p-0';
+        dot.className = 'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 pointer-events-none';
+        clearInterval(refreshInterval);
+      }
+    }
+
+    function startInterval() {
+      clearInterval(refreshInterval);
+      refreshInterval = setInterval(loadAll, 5000);
+    }
+
+    async function publishMessage(event) {
+      event.preventDefault();
+      const form   = document.getElementById('publish-form');
+      const btn    = form.querySelector('button[type="submit"]');
+      const result = document.getElementById('publish-result');
+
+      const domain = form.querySelector('input[name="domain"]:checked').value;
+      const body   = {
+        domain,
+        id:          form.querySelector('[name="id"]').value.trim(),
+        name:        form.querySelector('[name="name"]').value.trim(),
+        description: form.querySelector('[name="description"]').value.trim(),
+        price:       form.querySelector('[name="price"]').value.trim(),
+        quantity:    form.querySelector('[name="quantity"]').value.trim(),
+        category:    form.querySelector('[name="category"]').value.trim(),
+        brand:       form.querySelector('[name="brand"]').value.trim(),
+        image:       form.querySelector('[name="image"]').value.trim(),
+      };
+
+      btn.disabled    = true;
+      btn.textContent = 'Publicando…';
+
+      try {
+        const r    = await fetch('/api/kafka/publish', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(body)
+        });
+        const data = await r.json();
+
+        result.textContent = `✓  topic: ${data.topic}    id: ${data.id}`;
+        result.className   = 'mt-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-green-400';
+        setTimeout(() => result.classList.add('hidden'), 6000);
+        await loadAll();
+      } catch (e) {
+        result.textContent = `✗  ${e.message}`;
+        result.className   = 'mt-3 bg-slate-800 border border-red-900/40 rounded-lg px-4 py-2.5 text-xs font-mono text-red-400';
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Publicar →';
+      }
+    }
+
+    function resetForm() {
+      const form = document.getElementById('publish-form');
+      form.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => i.value = '');
+      document.getElementById('publish-result').classList.add('hidden');
+    }
+
+    // Init
+    loadAll();
+    startInterval();
+    setInterval(loadHealth, 15000);
+  </script>
+
+</body>
+</html>

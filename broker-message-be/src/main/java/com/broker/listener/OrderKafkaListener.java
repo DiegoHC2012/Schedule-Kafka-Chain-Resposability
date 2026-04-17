@@ -2,6 +2,7 @@ package com.broker.listener;
 
 import com.broker.config.KafkaTopics;
 import com.broker.model.RetryJob;
+import com.broker.mongo.MongoSyncService;
 import com.broker.repository.RetryJobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class OrderKafkaListener {
 
     private final RetryJobRepository retryJobRepository;
+    private final MongoSyncService mongoSyncService;
 
     @KafkaListener(topics = KafkaTopics.ORDER_RETRY_JOBS, groupId = "broker-message-be")
     public void listen(String message) {
@@ -24,6 +26,7 @@ public class OrderKafkaListener {
             retryJob.setPayload(message);
             retryJob.setStatus("PENDING");
             retryJobRepository.save(retryJob);
+            mongoSyncService.sync(retryJob);
             log.info("Saved PENDING RetryJob for order: {}", retryJob.getId());
         } catch (Exception e) {
             log.error("Error saving order retry job: {}", e.getMessage(), e);

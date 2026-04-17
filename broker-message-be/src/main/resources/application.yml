@@ -14,6 +14,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/broker_db}
+      database: broker_db
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -21,17 +25,23 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:your-email@gmail.com}
-    password: ${MAIL_PASSWORD:your-password}
+    username: ${EMAIL_USER:your-email@gmail.com}
+    password: ${EMAIL_PASS:your-password}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
 
 app:
   endpoints:
@@ -39,10 +49,27 @@ app:
     order: ${ORDER_ENDPOINT:http://localhost:8082/api/orders}
     product: ${PRODUCT_ENDPOINT:http://localhost:8083/api/products}
   email:
-    from: ${EMAIL_FROM:noreply@broker.com}
-    success-recipient: ${EMAIL_SUCCESS_RECIPIENT:admin@broker.com}
-    failure-recipient: ${EMAIL_FAILURE_RECIPIENT:admin@broker.com}
+    from: ${EMAIL_USER:noreply@broker.com}
+    success-recipient: ${EMAIL_SUCCESS_TO:${EMAIL_USER:admin@broker.com}}
+    failure-recipient: ${EMAIL_FAILURE_TO:${EMAIL_USER:admin@broker.com}}
+  retry:
+    max-attempts: ${RETRY_MAX_ATTEMPTS:3}
+    base-delay-seconds: ${RETRY_BASE_DELAY_SECONDS:10}
+    max-delay-seconds: ${RETRY_MAX_DELAY_SECONDS:300}
 
 logging:
   level:
     com.broker: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    mail:
+      enabled: true
+
