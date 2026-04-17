@@ -156,11 +156,28 @@ public class OrderRetryService {
         orderRetryJobRepository.save(failedJob);
         mongoSyncService.syncOrderFailed(failedJob);
 
-        // Send failure email
+        // Send failure email and record result in payload
         try {
             emailService.sendFailureEmail(retryJob, errorMessage);
+            updatePayloadFailureNotification(retryJob, "SUCCESS", "Correo de fallo enviado correctamente");
         } catch (Exception mailEx) {
             log.error("Could not send failure email for order retryJobId={}: {}", retryJob.getId(), mailEx.getMessage());
+            updatePayloadFailureNotification(retryJob, "FAILED", mailEx.getMessage());
+        }
+        retryJobRepository.save(retryJob);
+        mongoSyncService.sync(retryJob);
+    }
+
+    private void updatePayloadFailureNotification(RetryJob retryJob, String status, String message) {
+        try {
+            RetryJobPayload payload = objectMapper.readValue(retryJob.getPayload(), RetryJobPayload.class);
+            RetryJobPayload.StepStatus notif = new RetryJobPayload.StepStatus();
+            notif.setStatus(status);
+            notif.setMessage(message);
+            payload.setFailureNotification(notif);
+            retryJob.setPayload(objectMapper.writeValueAsString(payload));
+        } catch (Exception e) {
+            log.warn("Could not update failure notification in payload: {}", e.getMessage());
         }
     }
 
