@@ -14,6 +14,8 @@ import java.util.UUID;
 @Repository
 public interface RetryJobRepository extends JpaRepository<RetryJob, UUID> {
 
+    long countByStatus(String status);
+
     @Query("""
         SELECT r
         FROM RetryJob r

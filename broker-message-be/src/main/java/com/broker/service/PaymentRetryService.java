@@ -8,6 +8,7 @@ import com.broker.config.KafkaTopics;
 import com.broker.dto.RetryJobPayload;
 import com.broker.model.PaymentRetryJob;
 import com.broker.model.RetryJob;
+import com.broker.mongo.MongoSyncService;
 import com.broker.repository.PaymentRetryJobRepository;
 import com.broker.repository.RetryJobRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,8 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,14 +31,9 @@ public class PaymentRetryService {
     private final PaymentCreationHandler paymentCreationHandler;
     private final PaymentEmailHandler paymentEmailHandler;
     private final PaymentUpdateStatusHandler paymentUpdateStatusHandler;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
+    private final MongoSyncService mongoSyncService;
     private final ObjectMapper objectMapper;
-
-    @Value("${app.email.from}")
-    private String from;
-
-    @Value("${app.email.failure-recipient}")
-    private String failureRecipient;
 
     @Value("${app.retry.max-attempts:3}")
     private int defaultMaxAttempts;
@@ -76,6 +70,8 @@ public class PaymentRetryService {
                 } else {
                     finalizeSuccess(retryJob);
                     retryJobRepository.save(retryJob);
+                    mongoSyncService.sync(retryJob);
+                    mongoSyncService.syncPaymentSuccess(retryJob);
                 }
             } catch (Exception e) {
                 log.error("Unexpected error processing payment retryJob {}: {}", retryJob.getId(), e.getMessage(), e);
@@ -138,6 +134,7 @@ public class PaymentRetryService {
         retryJob.setStatus("PENDING");
         retryJob.setNextRetryAt(LocalDateTime.now().plusSeconds(delay));
         retryJobRepository.save(retryJob);
+        mongoSyncService.sync(retryJob);
 
         log.warn("Payment retry attempt {} failed for retryJobId={}. Next attempt in {} seconds. Error: {}",
                 retryJob.getAttemptCount(), retryJob.getId(), delay, errorMessage);
@@ -149,6 +146,7 @@ public class PaymentRetryService {
         retryJob.setStatus("FAILED");
         retryJob.setNextRetryAt(LocalDateTime.now());
         retryJobRepository.save(retryJob);
+        mongoSyncService.sync(retryJob);
 
         // Save to payments_retry_jobs table
         PaymentRetryJob failedJob = new PaymentRetryJob();
@@ -156,15 +154,11 @@ public class PaymentRetryService {
         failedJob.setPayload(retryJob.getPayload());
         failedJob.setErrorMessage(errorMessage);
         paymentRetryJobRepository.save(failedJob);
+        mongoSyncService.syncPaymentFailed(failedJob);
 
         // Send failure email
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from);
-            message.setTo(failureRecipient);
-            message.setSubject("Error en procesamiento de pago");
-            message.setText("El pago con RetryJob ID " + retryJob.getId() + " falló.\n\nError: " + errorMessage + "\n\nPayload: " + retryJob.getPayload());
-            mailSender.send(message);
+            emailService.sendFailureEmail(retryJob, errorMessage);
         } catch (Exception mailEx) {
             log.error("Could not send failure email for payment retryJobId={}: {}", retryJob.getId(), mailEx.getMessage());
         }
