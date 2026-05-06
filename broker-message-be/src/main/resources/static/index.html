@@ -23,7 +23,7 @@
       <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-base font-bold select-none">⚡</div>
       <div>
         <h1 class="text-sm font-bold text-white leading-none">Broker Message Dashboard</h1>
-        <p class="text-xs text-slate-500 mt-0.5">Chain of Responsibility · Kafka Retry Monitor</p>
+        <p class="text-xs text-slate-500 mt-0.5">Chain of Responsibility · Retry + Orders + Payments + Shipments</p>
       </div>
     </div>
     <div class="flex items-center gap-3">
@@ -70,14 +70,241 @@
         <p id="stat-pending" class="text-3xl font-bold text-yellow-400 tabular-nums">—</p>
       </div>
       <div class="bg-slate-900 border border-green-500/25 rounded-xl p-4">
-        <p class="text-xs text-green-500 uppercase tracking-widest mb-2">Completed</p>
-        <p id="stat-completed" class="text-3xl font-bold text-green-400 tabular-nums">—</p>
+        <p class="text-xs text-green-500 uppercase tracking-widest mb-2">Success</p>
+        <p id="stat-success" class="text-3xl font-bold text-green-400 tabular-nums">—</p>
       </div>
       <div class="bg-slate-900 border border-red-500/25 rounded-xl p-4">
         <p class="text-xs text-red-500 uppercase tracking-widest mb-2">Failed</p>
         <p id="stat-failed" class="text-3xl font-bold text-red-400 tabular-nums">—</p>
       </div>
     </div>
+
+    <!-- Module Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-cyan-500/25 rounded-xl p-4">
+        <p class="text-xs text-cyan-500 uppercase tracking-widest mb-2">Orders</p>
+        <p id="module-orders-total" class="text-3xl font-bold text-cyan-300 tabular-nums">—</p>
+      </div>
+      <div class="bg-slate-900 border border-emerald-500/25 rounded-xl p-4">
+        <p class="text-xs text-emerald-500 uppercase tracking-widest mb-2">Payments</p>
+        <p id="module-payments-total" class="text-3xl font-bold text-emerald-300 tabular-nums">—</p>
+      </div>
+      <div class="bg-slate-900 border border-amber-500/25 rounded-xl p-4">
+        <p class="text-xs text-amber-500 uppercase tracking-widest mb-2">Ready To Ship</p>
+        <p id="module-shipments-paid" class="text-3xl font-bold text-amber-300 tabular-nums">—</p>
+      </div>
+      <div class="bg-slate-900 border border-sky-500/25 rounded-xl p-4">
+        <p class="text-xs text-sky-500 uppercase tracking-widest mb-2">Shipped</p>
+        <p id="module-shipments-sent" class="text-3xl font-bold text-sky-300 tabular-nums">—</p>
+      </div>
+    </div>
+
+    <!-- Module Actions -->
+    <section class="bg-slate-900 border border-slate-700/60 rounded-2xl p-5 space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Module Actions</h2>
+          <p class="text-xs text-slate-600 mt-1">Cataloga productos, crea órdenes, registra pagos y mueve estatus desde un solo bloque.</p>
+        </div>
+        <span class="text-[11px] text-slate-600">Desktop: dos columnas y dos renglones · Mobile: tarjetas apiladas · Órdenes usan catálogo</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+        <section class="h-full bg-slate-950/60 border border-violet-500/15 rounded-xl p-5 flex flex-col">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-sm font-semibold text-white">Create Product</h3>
+              <p class="text-[11px] text-slate-600 mt-1">Da de alta el producto en catálogo para que luego pueda usarse en órdenes.</p>
+            </div>
+            <button type="button" onclick="prefillProductDemo()"
+                    class="shrink-0 text-slate-400 hover:text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors">
+              Demo
+            </button>
+          </div>
+
+          <form id="create-product-form" onsubmit="createProductAction(event)" class="flex flex-col gap-4" autocomplete="off">
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Product ID</label>
+              <input name="productId" type="text" placeholder="sku-001"
+                     class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors"/>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Name</label>
+              <input name="name" type="text" placeholder="Laptop Pro"
+                     class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors"/>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Image URL</label>
+              <input name="image" type="url" placeholder="https://example.com/product.png"
+                     class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors"/>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Available Quantity</label>
+              <input name="availableQuantity" type="number" min="0" step="1" placeholder="25"
+                     class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors"/>
+            </div>
+            <div>
+              <button type="submit"
+                      class="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+                Crear producto
+              </button>
+            </div>
+          </form>
+
+          <div id="create-product-result" class="hidden mt-4 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono"></div>
+        </section>
+
+        <section class="h-full bg-slate-950/60 border border-cyan-500/15 rounded-xl p-5 flex flex-col">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-sm font-semibold text-white">Create Order</h3>
+              <p class="text-[11px] text-slate-600 mt-1">Selecciona uno o varios artículos del catálogo, define la cantidad y arma la orden desde aquí.</p>
+            </div>
+            <button type="button" onclick="prefillOrderDemo()"
+                    class="shrink-0 text-slate-400 hover:text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors">
+              Demo
+            </button>
+          </div>
+
+          <form id="create-order-form" onsubmit="createOrderAction(event)" class="flex flex-1 flex-col gap-4" autocomplete="off">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-500 block mb-1.5">Customer Email</label>
+                <input name="customerEmail" type="email" placeholder="cliente@example.com"
+                       class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors"/>
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 block mb-1.5">Total Amount</label>
+                <input name="totalAmount" type="number" step="0.01" min="0.01" placeholder="250.00"
+                       class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors"/>
+              </div>
+            </div>
+
+            <div class="flex-1 flex flex-col">
+              <div class="flex items-center justify-between gap-3 mb-1.5">
+                <label class="text-xs text-slate-500 block">Products</label>
+                <button id="add-order-product-btn" type="button" onclick="addOrderProductRow()"
+                        class="shrink-0 text-cyan-300 hover:text-cyan-200 text-xs px-3 py-1.5 rounded-lg border border-cyan-500/30 hover:border-cyan-400/50 transition-colors disabled:text-slate-600 disabled:border-slate-800 disabled:cursor-not-allowed">
+                  + Agregar artículo
+                </button>
+              </div>
+              <div id="order-products-builder" class="space-y-3"></div>
+              <p class="text-[11px] text-slate-600 mt-2">Cada fila representa un artículo de la orden. Puedes agregar uno o varios productos del catálogo.</p>
+            </div>
+
+            <div class="mt-auto pt-1">
+              <button type="submit"
+                      class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+                Crear orden
+              </button>
+            </div>
+          </form>
+          <div id="create-order-result" class="hidden mt-4 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono"></div>
+        </section>
+
+        <section class="h-full bg-slate-950/60 border border-emerald-500/15 rounded-xl p-5 flex flex-col">
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold text-white">Register Payment</h3>
+            <p class="text-[11px] text-slate-600 mt-1">Más compacto: selección de orden arriba y monto/saldo en una fila cuando hay espacio.</p>
+          </div>
+
+          <form id="register-payment-form" onsubmit="registerPaymentAction(event)" class="flex flex-1 flex-col gap-4" autocomplete="off">
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Order</label>
+              <select id="payment-order-select" onchange="syncPaymentFormFromSelectedOrder()"
+                      class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors">
+                <option value="">No orders available</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Customer Email</label>
+              <input id="payment-customer-email" type="text" readonly
+                     class="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none"/>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-500 block mb-1.5">Payment Amount</label>
+                <input id="payment-amount" type="number" step="0.01" min="0.01" placeholder="100.00" oninput="recomputePaymentRemaining()"
+                       class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"/>
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 block mb-1.5">Remaining Balance</label>
+                <input id="payment-remaining" type="text" readonly
+                       class="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none"/>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2.5 min-h-[72px] flex items-center">
+              <p id="payment-balance-hint" class="text-[11px] text-slate-600 leading-5">Se calcula con base en la orden seleccionada.</p>
+            </div>
+
+            <div class="mt-auto pt-1">
+              <button type="submit"
+                      class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+                Registrar pago
+              </button>
+            </div>
+          </form>
+          <div id="register-payment-result" class="hidden mt-4 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono"></div>
+        </section>
+
+        <section class="h-full bg-slate-950/60 border border-amber-500/15 rounded-xl p-5 flex flex-col">
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold text-white">Update Order Status</h3>
+            <p class="text-[11px] text-slate-600 mt-1">Acción corta, con espacio visual para que no quede comprimida junto al formulario de pagos.</p>
+          </div>
+
+          <form id="update-status-form" onsubmit="updateOrderStatusAction(event)" class="flex flex-1 flex-col gap-4" autocomplete="off">
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">Order</label>
+              <select id="status-order-select"
+                      class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors">
+                <option value="">No orders available</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs text-slate-500 block mb-1.5">New Status</label>
+              <select id="status-value-select"
+                      class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors">
+                <option value="CREADA">CREADA</option>
+                <option value="PENDIENTE_PAGO">PENDIENTE_PAGO</option>
+                <option value="EN_PROCESO">EN_PROCESO</option>
+                <option value="PAGADO">PAGADO</option>
+                <option value="CANCELADA">CANCELADA</option>
+              </select>
+            </div>
+
+            <div class="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-3 text-[11px] text-slate-600 leading-5 min-h-[96px]">
+              Si cambias a PAGADO se generará el flujo de envío automático según la lógica del módulo.
+            </div>
+
+            <div class="mt-auto pt-1">
+              <button type="submit"
+                      class="w-full bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+                Actualizar estatus
+              </button>
+            </div>
+          </form>
+          <div id="update-status-result" class="hidden mt-4 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-700/60 rounded-xl p-5 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Latest Products</h2>
+          <p class="text-xs text-slate-600 mt-1">Vista rápida del catálogo reciente para revisar disponibilidad antes de crear órdenes.</p>
+        </div>
+        <span class="text-[11px] text-slate-600">/productos · últimos 3</span>
+      </div>
+      <div id="products-catalog-list" class="space-y-3 text-xs">
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-3 text-slate-600">Loading products…</div>
+      </div>
+    </section>
 
     <!-- Publish Panel -->
     <div class="bg-slate-900 border border-slate-700/60 rounded-xl p-5">
@@ -180,7 +407,7 @@
                   class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             <option value="">All statuses</option>
             <option value="PENDING">PENDING</option>
-            <option value="COMPLETED">COMPLETED</option>
+            <option value="SUCCESS">SUCCESS</option>
             <option value="FAILED">FAILED</option>
           </select>
           <select id="filter-domain" onchange="applyFilter()"
@@ -219,12 +446,90 @@
       </div>
     </div>
 
+    <!-- Modules Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+      <section class="bg-slate-900 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-slate-700/60 flex items-center justify-between">
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Latest Orders</h2>
+          <span class="text-[11px] text-slate-600">/api/dashboard/orders</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-slate-800/40">
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">ID</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Status</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Total</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Remaining</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              <tr><td colspan="4" class="text-center py-12 text-slate-600">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bg-slate-900 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-slate-700/60 flex items-center justify-between">
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Latest Payments</h2>
+          <span class="text-[11px] text-slate-600">/api/dashboard/payments</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-slate-800/40">
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">ID</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Order</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Amount</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Remaining</th>
+              </tr>
+            </thead>
+            <tbody id="payments-table-body">
+              <tr><td colspan="4" class="text-center py-12 text-slate-600">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bg-slate-900 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-slate-700/60 flex items-center justify-between">
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Latest Shipments</h2>
+          <span class="text-[11px] text-slate-600">/api/dashboard/shipments</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-slate-800/40">
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">ID</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Order</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Status</th>
+                <th class="text-left px-4 py-2.5 text-slate-500 font-medium">Shipped</th>
+              </tr>
+            </thead>
+            <tbody id="shipments-table-body">
+              <tr><td colspan="4" class="text-center py-12 text-slate-600">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
   </main>
 
   <script>
     let autoRefresh  = true;
     let refreshInterval = null;
     let allJobs = [];
+    let dashboardOrders = [];
+    let dashboardProducts = [];
+    let orderProductSelections = [];
+    let loadAllInFlight = false;
+    let loadHealthInFlight = false;
+    let healthFailureCount = 0;
+    let productFailureCount = 0;
+    let hasResolvedHealth = false;
+    let hasResolvedProducts = false;
 
     const TOPIC_META = {
       payments_retry_jobs: { label: 'Payment', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
@@ -234,12 +539,29 @@
 
     const STATUS_META = {
       PENDING:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-      COMPLETED: 'bg-green-500/15 text-green-400 border-green-500/30',
+      SUCCESS:   'bg-green-500/15 text-green-400 border-green-500/30',
       FAILED:    'bg-red-500/15 text-red-400 border-red-500/30'
+    };
+
+    const ORDER_STATUS_META = {
+      CREADA: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+      PAGADO: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+      PENDIENTE_PAGO: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      EN_PROCESO: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+      CANCELADA: 'bg-red-500/15 text-red-300 border-red-500/30'
+    };
+
+    const SHIPMENT_STATUS_META = {
+      PAGADO: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      ENVIADO: 'bg-sky-500/15 text-sky-300 border-sky-500/30'
     };
 
     function badge(label, cls) {
       return `<span class="inline-flex items-center rounded-md px-2 py-0.5 border text-xs font-medium ${cls}">${label}</span>`;
+    }
+
+    function shortId(value) {
+      return value ? `${value.substring(0, 8)}…` : '—';
     }
 
     function stepCell(status) {
@@ -260,41 +582,582 @@
            + ' ' + d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
-    async function loadHealth() {
+    function fmtMoney(value) {
+      if (value === null || value === undefined) return '—';
+      const amount = Number(value);
+      return Number.isNaN(amount) ? '—' : amount.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function setResult(targetId, message, isError = false) {
+      const el = document.getElementById(targetId);
+      el.textContent = message;
+      el.className = `mt-3 bg-slate-800 border rounded-lg px-4 py-2.5 text-xs font-mono ${isError ? 'border-red-900/40 text-red-400' : 'border-slate-700 text-green-400'}`;
+      el.classList.remove('hidden');
+    }
+
+    function setHealthBadge(textValue, dotClassName, textClassName, titleValue = textValue) {
+      document.getElementById('health-dot').className = dotClassName;
+      document.getElementById('health-text').textContent = textValue;
+      document.getElementById('health-text').className = textClassName;
+      document.getElementById('health-badge').title = titleValue;
+    }
+
+    function humanizeHealthComponent(name) {
+      const labels = {
+        db: 'db',
+        diskSpace: 'disk',
+        mail: 'mail',
+        mongo: 'mongo',
+        ping: 'ping',
+        ssl: 'ssl'
+      };
+
+      return labels[name] || name;
+    }
+
+    function getHealthIssueSummary(components) {
+      const unhealthy = Object.entries(components || {})
+        .filter(([, component]) => component?.status && component.status !== 'UP')
+        .map(([name, component]) => ({
+          name: humanizeHealthComponent(name),
+          status: component.status
+        }));
+
+      if (!unhealthy.length) {
+        return {
+          shortLabel: '',
+          title: ''
+        };
+      }
+
+      const shortLabel = unhealthy.slice(0, 2).map(component => component.name).join(', ');
+      const title = unhealthy.map(component => `${component.name}: ${component.status}`).join(' | ');
+
+      return {
+        shortLabel,
+        title
+      };
+    }
+
+    function parsePayload(text) {
+      if (!text) {
+        return null;
+      }
+
       try {
-        const r  = await fetch('/actuator/health');
-        const js = await r.json();
-        const dot  = document.getElementById('health-dot');
-        const text = document.getElementById('health-text');
-        if (js.status === 'UP') {
-          dot.className  = 'w-2 h-2 rounded-full bg-green-400';
-          text.textContent = 'Healthy';
-          text.className = 'text-green-400';
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    }
+
+    function payloadMessage(payload, status) {
+      return typeof payload === 'string'
+        ? payload
+        : payload?.message || payload?.error || `HTTP ${status}`;
+    }
+
+    async function fetchJson(url, options = {}) {
+      const {
+        timeoutMs = 4000,
+        timeoutMessage,
+        allowHttpErrors = false,
+        ...fetchOptions
+      } = options;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(url, {
+          ...fetchOptions,
+          signal: controller.signal
+        });
+
+        const text = await response.text();
+        const payload = parsePayload(text);
+
+        if (!allowHttpErrors && !response.ok) {
+          throw new Error(payloadMessage(payload, response.status));
+        }
+
+        return { response, payload };
+      } catch (error) {
+        const message = String(error?.message || '').toLowerCase();
+        const aborted = controller.signal.aborted
+          || error?.name === 'AbortError'
+          || message.includes('signal is aborted')
+          || message.includes('aborted');
+
+        if (aborted) {
+          throw new Error(timeoutMessage || `La solicitud tardó más de ${Math.ceil(timeoutMs / 1000)} segundos. Intenta de nuevo.`);
+        }
+
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    async function requestJson(url, options = {}) {
+      const {
+        headers,
+        timeoutMs = 5000,
+        timeoutMessage,
+        ...fetchOptions
+      } = options;
+
+      const { payload } = await fetchJson(url, {
+        ...fetchOptions,
+        timeoutMs,
+        timeoutMessage,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(headers || {})
+        }
+      });
+
+      return payload;
+    }
+
+    function getProductById(productId) {
+      return dashboardProducts.find(product => product.productId === productId) || null;
+    }
+
+    function getSelectedOrderProductIds(excludeIndex = null) {
+      return new Set(orderProductSelections
+        .filter((_, index) => index !== excludeIndex)
+        .map(selection => selection.productId)
+        .filter(Boolean));
+    }
+
+    function getAvailableStock(productId) {
+      const product = getProductById(productId);
+      return Math.max(product?.availableQuantity ?? 0, 0);
+    }
+
+    function getOrderProductOptionLabel(product) {
+      return `${product.name || 'Sin nombre'} · ${product.productId} · Stock ${product.availableQuantity ?? 0}`;
+    }
+
+    function getNextOrderProductId() {
+      if (!dashboardProducts.length) {
+        return '';
+      }
+
+      const selectedIds = new Set(orderProductSelections.map(item => item.productId).filter(Boolean));
+      const nextProduct = dashboardProducts.find(product => !selectedIds.has(product.productId));
+      return (nextProduct || dashboardProducts[0]).productId;
+    }
+
+    function createOrderProductSelection(productId = null, quantity = 1) {
+      return {
+        productId: productId || getNextOrderProductId(),
+        quantity
+      };
+    }
+
+    function ensureOrderProductSelections() {
+      if (!orderProductSelections.length) {
+        orderProductSelections = [createOrderProductSelection()];
+      }
+    }
+
+    function buildOrderProductOptions(selectedProductId, rowIndex) {
+      if (!dashboardProducts.length) {
+        return '<option value="">No products available</option>';
+      }
+
+      const takenIds = getSelectedOrderProductIds(rowIndex);
+      const options = [];
+      if (selectedProductId && !getProductById(selectedProductId)) {
+        options.push(`<option value="${escapeHtml(selectedProductId)}" selected>Producto no disponible · ${escapeHtml(selectedProductId)}</option>`);
+      }
+
+      return options.concat(dashboardProducts
+        .filter(product => product.productId === selectedProductId || !takenIds.has(product.productId))
+        .map(product => {
+        const selected = product.productId === selectedProductId ? ' selected' : '';
+        return `<option value="${escapeHtml(product.productId)}"${selected}>${escapeHtml(getOrderProductOptionLabel(product))}</option>`;
+      })).join('');
+    }
+
+    function applyOrderInventoryDelta(products) {
+      if (!Array.isArray(products) || !products.length) {
+        return;
+      }
+
+      const quantitiesByProduct = products.reduce((acc, product) => {
+        const productId = String(product.productId || '').trim();
+        if (!productId) {
+          return acc;
+        }
+
+        acc.set(productId, (acc.get(productId) || 0) + Number(product.quantity || 0));
+        return acc;
+      }, new Map());
+
+      dashboardProducts = dashboardProducts.map(product => {
+        const requestedQuantity = quantitiesByProduct.get(product.productId) || 0;
+        if (!requestedQuantity) {
+          return product;
+        }
+
+        return {
+          ...product,
+          availableQuantity: Math.max((product.availableQuantity ?? 0) - requestedQuantity, 0)
+        };
+      });
+
+      renderProductCatalogList(dashboardProducts);
+      renderOrderProductRows();
+    }
+
+    function renderOrderProductRows() {
+      const container = document.getElementById('order-products-builder');
+      const addButton = document.getElementById('add-order-product-btn');
+
+      if (!container) {
+        return;
+      }
+
+      ensureOrderProductSelections();
+
+      container.innerHTML = orderProductSelections.map((selection, index) => {
+        const productId = selection.productId || (dashboardProducts[0]?.productId ?? '');
+        const quantity = Number(selection.quantity);
+        const normalizedQuantity = Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
+        const product = getProductById(productId);
+        const availableStock = getAvailableStock(productId);
+        const stockMessage = product
+          ? `Stock disponible: ${product.availableQuantity ?? 0}`
+          : (dashboardProducts.length ? 'Producto no disponible en el catálogo actual' : 'Primero crea un producto para habilitar la orden');
+        const removeDisabled = orderProductSelections.length === 1 ? ' disabled' : '';
+        const selectDisabled = dashboardProducts.length ? '' : ' disabled';
+
+        orderProductSelections[index] = {
+          productId,
+          quantity: normalizedQuantity
+        };
+
+        return `
+          <div class="order-product-row rounded-lg border border-slate-800 bg-slate-900/60 p-3 grid grid-cols-1 sm:grid-cols-5 gap-3 fade-in">
+            <div class="sm:col-span-3 min-w-0">
+              <label class="text-[11px] uppercase tracking-widest text-slate-600 block mb-1.5">Artículo ${index + 1}</label>
+              <select onchange="updateOrderProductSelection(${index}, 'productId', this.value)"${selectDisabled}
+                      class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors disabled:text-slate-500 disabled:border-slate-800 disabled:cursor-not-allowed">
+                ${buildOrderProductOptions(productId, index)}
+              </select>
+              <p class="text-[11px] text-slate-600 mt-1">${escapeHtml(stockMessage)}</p>
+            </div>
+            <div>
+              <label class="text-[11px] uppercase tracking-widest text-slate-600 block mb-1.5">Cantidad</label>
+              <input type="number" min="1"${product ? ` max="${availableStock}"` : ''} step="1" value="${normalizedQuantity}" oninput="updateOrderProductSelection(${index}, 'quantity', this.value)"
+                     class="w-full bg-slate-800 border border-slate-600 hover:border-slate-500 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors"/>
+            </div>
+            <div class="flex items-end">
+              <button type="button" onclick="removeOrderProductRow(${index})"${removeDisabled}
+                      class="w-full bg-slate-900 border border-slate-700 hover:border-red-500/50 hover:text-red-300 text-slate-300 text-sm font-medium px-3 py-2 rounded-lg transition-colors disabled:text-slate-600 disabled:border-slate-800 disabled:cursor-not-allowed">
+                Quitar
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (addButton) {
+        addButton.disabled = !dashboardProducts.length || orderProductSelections.length >= dashboardProducts.length;
+      }
+    }
+
+    function addOrderProductRow() {
+      if (!dashboardProducts.length) {
+        setResult('create-order-result', 'Primero crea al menos un producto en el catálogo.', true);
+        return;
+      }
+
+      orderProductSelections.push(createOrderProductSelection());
+      renderOrderProductRows();
+    }
+
+    function removeOrderProductRow(index) {
+      if (orderProductSelections.length === 1) {
+        orderProductSelections = [createOrderProductSelection()];
+      } else {
+        orderProductSelections = orderProductSelections.filter((_, itemIndex) => itemIndex !== index);
+      }
+
+      renderOrderProductRows();
+    }
+
+    function updateOrderProductSelection(index, field, value) {
+      const selection = orderProductSelections[index];
+      if (!selection) {
+        return;
+      }
+
+      if (field === 'quantity') {
+        selection.quantity = value;
+        return;
+      }
+
+      selection[field] = value;
+      renderOrderProductRows();
+    }
+
+    function buildOrderProductsPayload() {
+      ensureOrderProductSelections();
+
+      return orderProductSelections.map((selection, index) => {
+        const productId = String(selection.productId || '').trim();
+        const quantity = Number(selection.quantity);
+        const availableStock = getAvailableStock(productId);
+
+        if (!productId) {
+          throw new Error(`Artículo ${index + 1}: selecciona un producto`);
+        }
+
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          throw new Error(`Artículo ${index + 1}: ingresa una cantidad válida`);
+        }
+
+        if (quantity > availableStock) {
+          throw new Error(`Artículo ${index + 1}: el stock disponible de ${productId} es ${availableStock}`);
+        }
+
+        return {
+          productId,
+          productName: getProductById(productId)?.name || '',
+          quantity
+        };
+      });
+    }
+
+    function prefillProductDemo() {
+      const form = document.getElementById('create-product-form');
+      const suffix = Math.floor(Date.now() / 1000).toString().slice(-4);
+      form.querySelector('[name="productId"]').value = `sku-demo-${suffix}`;
+      form.querySelector('[name="name"]').value = `Producto Demo ${suffix}`;
+      form.querySelector('[name="image"]').value = `https://picsum.photos/seed/${suffix}/320/220`;
+      form.querySelector('[name="availableQuantity"]').value = '12';
+    }
+
+    function prefillOrderDemo() {
+      const form = document.getElementById('create-order-form');
+      const suffix = Math.floor(Date.now() / 1000).toString().slice(-4);
+      form.querySelector('[name="customerEmail"]').value = `demo-${suffix}@mail.com`;
+      form.querySelector('[name="totalAmount"]').value = '250.00';
+
+      if (!dashboardProducts.length) {
+        orderProductSelections = [createOrderProductSelection()];
+        renderOrderProductRows();
+        setResult('create-order-result', 'Primero crea al menos un producto en el catálogo.', true);
+        return;
+      }
+
+      const selectedProducts = dashboardProducts.slice(0, Math.min(2, dashboardProducts.length));
+      orderProductSelections = selectedProducts.map((product, index) => createOrderProductSelection(product.productId, index === 0 ? 1 : 2));
+      renderOrderProductRows();
+    }
+
+    function renderProductCatalogList(products) {
+      const container = document.getElementById('products-catalog-list');
+      if (!products.length) {
+        container.innerHTML = '<div class="rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-3 text-slate-600">No products yet. Crea uno arriba para usarlo en ordenes.</div>';
+        return;
+      }
+
+      container.innerHTML = products.slice(0, 3).map(product => `
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-3 flex items-center justify-between gap-3 fade-in">
+          <div class="min-w-0 flex items-center gap-3">
+            ${product.image ? `<img src="${product.image}" alt="${product.name || product.productId}" class="w-12 h-12 rounded-lg object-cover border border-slate-700 bg-slate-800 shrink-0"/>` : `<div class="w-12 h-12 rounded-lg border border-dashed border-slate-700 bg-slate-900/80 shrink-0 flex items-center justify-center text-[10px] text-slate-600 uppercase tracking-widest">No Img</div>`}
+            <div class="min-w-0">
+            <p class="text-slate-200 font-medium truncate">${product.name || 'Sin nombre'}</p>
+            <p class="text-slate-500 font-mono truncate mt-1">${product.productId}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-[11px] uppercase tracking-widest text-slate-600">Stock</p>
+            <p class="text-sm font-semibold text-violet-300 tabular-nums">${product.availableQuantity ?? 0}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function populateOrderActionSelects() {
+      const paymentSelect = document.getElementById('payment-order-select');
+      const statusSelect = document.getElementById('status-order-select');
+      const paymentSelected = paymentSelect.value;
+      const statusSelected = statusSelect.value;
+
+      if (!dashboardOrders.length) {
+        const empty = '<option value="">No orders available</option>';
+        paymentSelect.innerHTML = empty;
+        statusSelect.innerHTML = empty;
+        syncPaymentFormFromSelectedOrder();
+        return;
+      }
+
+      const options = dashboardOrders.map(order => {
+        const label = `${shortId(order.id)} · ${order.customerEmail} · ${fmtMoney(order.remainingBalance)}`;
+        return `<option value="${order.id}">${label}</option>`;
+      }).join('');
+
+      paymentSelect.innerHTML = options;
+      statusSelect.innerHTML = options;
+
+      paymentSelect.value = dashboardOrders.some(order => order.id === paymentSelected) ? paymentSelected : dashboardOrders[0].id;
+      statusSelect.value = dashboardOrders.some(order => order.id === statusSelected) ? statusSelected : dashboardOrders[0].id;
+      syncPaymentFormFromSelectedOrder();
+    }
+
+    function findSelectedOrder(orderId) {
+      return dashboardOrders.find(order => order.id === orderId) || null;
+    }
+
+    function syncPaymentFormFromSelectedOrder() {
+      const order = findSelectedOrder(document.getElementById('payment-order-select').value);
+      const emailInput = document.getElementById('payment-customer-email');
+      const amountInput = document.getElementById('payment-amount');
+
+      if (!order) {
+        emailInput.value = '';
+        amountInput.value = '';
+        document.getElementById('payment-remaining').value = '';
+        document.getElementById('payment-balance-hint').textContent = 'Se calcula con base en la orden seleccionada.';
+        return;
+      }
+
+      emailInput.value = order.customerEmail;
+      if (!amountInput.value) {
+        amountInput.value = '';
+      }
+      recomputePaymentRemaining();
+    }
+
+    function recomputePaymentRemaining() {
+      const order = findSelectedOrder(document.getElementById('payment-order-select').value);
+      const amountValue = Number(document.getElementById('payment-amount').value || 0);
+      const remainingInput = document.getElementById('payment-remaining');
+      const hint = document.getElementById('payment-balance-hint');
+
+      if (!order) {
+        remainingInput.value = '';
+        hint.textContent = 'Se calcula con base en la orden seleccionada.';
+        return;
+      }
+
+      const currentRemaining = Number(order.remainingBalance || 0);
+      const nextRemaining = currentRemaining - amountValue;
+      remainingInput.value = Number.isFinite(nextRemaining) ? nextRemaining.toFixed(2) : '';
+
+      if (amountValue <= 0) {
+        hint.textContent = `Saldo actual: ${fmtMoney(currentRemaining)}.`;
+        hint.className = 'text-[11px] text-slate-600 mt-1';
+        return;
+      }
+
+      if (nextRemaining < 0) {
+        hint.textContent = 'El monto no puede exceder el saldo restante.';
+        hint.className = 'text-[11px] text-red-400 mt-1';
+      } else {
+        hint.textContent = `Saldo restante proyectado: ${fmtMoney(nextRemaining)}.`;
+        hint.className = 'text-[11px] text-slate-600 mt-1';
+      }
+    }
+
+    async function loadHealth() {
+      if (loadHealthInFlight) {
+        return;
+      }
+
+      loadHealthInFlight = true;
+
+      try {
+        const timeoutMs = hasResolvedHealth ? 30000 : 30000;
+        const { payload: js } = await fetchJson('/actuator/health', {
+          timeoutMs,
+          allowHttpErrors: true
+        });
+        const status = js?.status || 'UNKNOWN';
+        const issueSummary = getHealthIssueSummary(js?.components);
+        healthFailureCount = 0;
+        hasResolvedHealth = true;
+
+        if (status === 'UP') {
+          setHealthBadge('Healthy', 'w-2 h-2 rounded-full bg-green-400', 'text-green-400', 'All health checks are UP');
+        } else if (status === 'DOWN') {
+          const label = issueSummary.shortLabel ? `DOWN (${issueSummary.shortLabel})` : 'DOWN';
+          setHealthBadge(label, 'w-2 h-2 rounded-full bg-red-500', 'text-red-400', issueSummary.title || 'Health status is DOWN');
         } else {
-          dot.className  = 'w-2 h-2 rounded-full bg-yellow-400';
-          text.textContent = js.status;
-          text.className = 'text-yellow-400';
+          const label = issueSummary.shortLabel ? `${status} (${issueSummary.shortLabel})` : status;
+          setHealthBadge(label, 'w-2 h-2 rounded-full bg-yellow-400', 'text-yellow-400', issueSummary.title || `Health status is ${status}`);
         }
       } catch {
-        document.getElementById('health-dot').className  = 'w-2 h-2 rounded-full bg-red-500';
-        document.getElementById('health-text').textContent = 'Unreachable';
-        document.getElementById('health-text').className  = 'text-red-400';
+        healthFailureCount += 1;
+        if (hasResolvedHealth && healthFailureCount < 3) {
+          return;
+        }
+
+        setHealthBadge('Unreachable', 'w-2 h-2 rounded-full bg-red-500', 'text-red-400', 'Health endpoint did not respond in time');
+      } finally {
+        loadHealthInFlight = false;
       }
     }
 
     async function loadStats() {
       try {
-        const stats = await fetch('/api/retry-jobs/stats').then(r => r.json());
+        const { payload: stats } = await fetchJson('/api/retry-jobs/stats', { timeoutMs: 3000 });
         document.getElementById('stat-total').textContent     = stats.total;
         document.getElementById('stat-pending').textContent   = stats.pending;
-        document.getElementById('stat-completed').textContent = stats.completed;
+        document.getElementById('stat-success').textContent   = stats.success ?? stats.completed;
         document.getElementById('stat-failed').textContent    = stats.failed;
       } catch { /* silently ignore */ }
     }
 
+    async function loadModuleStats() {
+      try {
+        const { payload: stats } = await fetchJson('/api/dashboard/module-stats', { timeoutMs: 3000 });
+        document.getElementById('module-orders-total').textContent = stats.ordersTotal;
+        document.getElementById('module-payments-total').textContent = stats.paymentsTotal;
+        document.getElementById('module-shipments-paid').textContent = stats.shipmentsPaid;
+        document.getElementById('module-shipments-sent').textContent = stats.shipmentsSent;
+      } catch { /* silently ignore */ }
+    }
+
+    async function loadProducts() {
+      try {
+        const timeoutMs = hasResolvedProducts ? 30000 : 30000;
+        const { payload: products } = await fetchJson('/productos', { timeoutMs });
+        productFailureCount = 0;
+        hasResolvedProducts = true;
+        dashboardProducts = Array.isArray(products) ? products : [];
+        renderOrderProductRows();
+        renderProductCatalogList(dashboardProducts);
+      } catch {
+        productFailureCount += 1;
+        if (hasResolvedProducts && productFailureCount < 3) {
+          return;
+        }
+
+        document.getElementById('products-catalog-list').innerHTML =
+          '<div class="rounded-lg border border-red-900/40 bg-slate-900/70 px-3 py-3 text-red-400/80">Error fetching products</div>';
+      }
+    }
+
     async function loadJobs() {
       try {
-        allJobs = await fetch('/api/retry-jobs?size=100').then(r => r.json());
+        const { payload: jobs } = await fetchJson('/api/retry-jobs?size=100', { timeoutMs: 3000 });
+        allJobs = jobs;
         applyFilter();
         document.getElementById('last-updated').textContent =
           'Updated ' + new Date().toLocaleTimeString('es');
@@ -343,11 +1206,106 @@
       }).join('');
     }
 
+    async function loadOrders() {
+      try {
+        const { payload: orders } = await fetchJson('/api/dashboard/orders?size=12', { timeoutMs: 3000 });
+        dashboardOrders = orders;
+        populateOrderActionSelects();
+        renderOrders(orders);
+      } catch {
+        document.getElementById('orders-table-body').innerHTML =
+          '<tr><td colspan="4" class="text-center py-10 text-red-400/70">Error fetching orders</td></tr>';
+      }
+    }
+
+    function renderOrders(orders) {
+      const tbody = document.getElementById('orders-table-body');
+      if (!orders.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-12 text-slate-600">No orders yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = orders.map(order => {
+        const statusCls = ORDER_STATUS_META[order.status] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+        return `<tr class="border-t border-slate-800/80 hover:bg-slate-800/40 transition-colors fade-in">
+          <td class="px-4 py-2.5 font-mono text-slate-500" title="${order.id}">${shortId(order.id)}</td>
+          <td class="px-4 py-2.5">${badge(order.status, statusCls)}</td>
+          <td class="px-4 py-2.5 text-slate-300">${fmtMoney(order.totalAmount)}</td>
+          <td class="px-4 py-2.5 text-slate-500">${fmtMoney(order.remainingBalance)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function loadPayments() {
+      try {
+        const { payload: payments } = await fetchJson('/api/dashboard/payments?size=8', { timeoutMs: 3000 });
+        renderPayments(payments);
+      } catch {
+        document.getElementById('payments-table-body').innerHTML =
+          '<tr><td colspan="4" class="text-center py-10 text-red-400/70">Error fetching payments</td></tr>';
+      }
+    }
+
+    function renderPayments(payments) {
+      const tbody = document.getElementById('payments-table-body');
+      if (!payments.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-12 text-slate-600">No payments yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = payments.map(payment => `
+        <tr class="border-t border-slate-800/80 hover:bg-slate-800/40 transition-colors fade-in">
+          <td class="px-4 py-2.5 font-mono text-slate-500" title="${payment.id}">${shortId(payment.id)}</td>
+          <td class="px-4 py-2.5 font-mono text-slate-500" title="${payment.orderId}">${shortId(payment.orderId)}</td>
+          <td class="px-4 py-2.5 text-slate-300">${fmtMoney(payment.amount)}</td>
+          <td class="px-4 py-2.5 text-slate-500">${fmtMoney(payment.remainingBalance)}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadShipments() {
+      try {
+        const { payload: shipments } = await fetchJson('/api/dashboard/shipments?size=8', { timeoutMs: 3000 });
+        renderShipments(shipments);
+      } catch {
+        document.getElementById('shipments-table-body').innerHTML =
+          '<tr><td colspan="4" class="text-center py-10 text-red-400/70">Error fetching shipments</td></tr>';
+      }
+    }
+
+    function renderShipments(shipments) {
+      const tbody = document.getElementById('shipments-table-body');
+      if (!shipments.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-12 text-slate-600">No shipments yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = shipments.map(shipment => {
+        const statusCls = SHIPMENT_STATUS_META[shipment.status] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+        return `<tr class="border-t border-slate-800/80 hover:bg-slate-800/40 transition-colors fade-in">
+          <td class="px-4 py-2.5 font-mono text-slate-500" title="${shipment.id}">${shortId(shipment.id)}</td>
+          <td class="px-4 py-2.5 font-mono text-slate-500" title="${shipment.orderId}">${shortId(shipment.orderId)}</td>
+          <td class="px-4 py-2.5">${badge(shipment.status, statusCls)}</td>
+          <td class="px-4 py-2.5 text-slate-500">${fmtDateTime(shipment.shippedAt)}</td>
+        </tr>`;
+      }).join('');
+    }
+
     async function loadAll() {
+      if (loadAllInFlight) {
+        return;
+      }
+
+      loadAllInFlight = true;
       const icon = document.getElementById('refresh-icon');
       icon.classList.add('spin');
-      await Promise.all([loadHealth(), loadStats(), loadJobs()]);
-      setTimeout(() => icon.classList.remove('spin'), 400);
+
+      try {
+        await Promise.allSettled([loadHealth(), loadStats(), loadModuleStats(), loadProducts(), loadJobs(), loadOrders(), loadPayments(), loadShipments()]);
+      } finally {
+        setTimeout(() => icon.classList.remove('spin'), 400);
+        loadAllInFlight = false;
+      }
     }
 
     function toggleAutoRefresh() {
@@ -413,6 +1371,155 @@
       }
     }
 
+    async function createOrderAction(event) {
+      event.preventDefault();
+      const form = document.getElementById('create-order-form');
+      const button = form.querySelector('button[type="submit"]');
+      let body;
+
+      try {
+        body = {
+          customerEmail: form.querySelector('[name="customerEmail"]').value.trim(),
+          totalAmount: Number(form.querySelector('[name="totalAmount"]').value),
+          products: buildOrderProductsPayload()
+        };
+
+        button.disabled = true;
+        button.textContent = 'Creando…';
+
+        const data = await requestJson('/ordenes', {
+          method: 'POST',
+          body: JSON.stringify(body),
+          timeoutMs: 15000,
+          timeoutMessage: 'Crear la orden tardó demasiado. Intenta de nuevo en unos segundos.'
+        });
+
+        setResult('create-order-result', `✓ orderId: ${data.orderId}  status: ${data.status}`);
+        applyOrderInventoryDelta(body.products);
+        form.reset();
+        orderProductSelections = [createOrderProductSelection()];
+        renderOrderProductRows();
+        await Promise.allSettled([loadHealth(), loadStats(), loadModuleStats(), loadJobs(), loadOrders(), loadPayments(), loadShipments()]);
+        setTimeout(loadProducts, 1200);
+      } catch (error) {
+        setResult('create-order-result', `✗ ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Crear orden';
+      }
+    }
+
+    async function createProductAction(event) {
+      event.preventDefault();
+      const form = document.getElementById('create-product-form');
+      const button = form.querySelector('button[type="submit"]');
+
+      try {
+        const availableQuantity = Number(form.querySelector('[name="availableQuantity"]').value);
+        if (!Number.isInteger(availableQuantity) || availableQuantity < 0) {
+          throw new Error('Ingresa una cantidad disponible valida');
+        }
+
+        button.disabled = true;
+        button.textContent = 'Creando…';
+
+        const data = await requestJson('/productos', {
+          method: 'POST',
+          body: JSON.stringify({
+            productId: form.querySelector('[name="productId"]').value.trim(),
+            name: form.querySelector('[name="name"]').value.trim(),
+            image: form.querySelector('[name="image"]').value.trim(),
+            availableQuantity
+          })
+        });
+
+        setResult('create-product-result', `✓ productId: ${data.productId}  stock: ${data.availableQuantity}`);
+        form.reset();
+        await loadAll();
+      } catch (error) {
+        setResult('create-product-result', `✗ ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Crear producto';
+      }
+    }
+
+    async function registerPaymentAction(event) {
+      event.preventDefault();
+      const form = document.getElementById('register-payment-form');
+      const button = form.querySelector('button[type="submit"]');
+
+      try {
+        const order = findSelectedOrder(document.getElementById('payment-order-select').value);
+        if (!order) {
+          throw new Error('Selecciona una orden');
+        }
+
+        const amount = Number(document.getElementById('payment-amount').value || 0);
+        const remainingBalance = Number(document.getElementById('payment-remaining').value || NaN);
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+          throw new Error('Ingresa un monto de pago valido');
+        }
+
+        if (!Number.isFinite(remainingBalance) || remainingBalance < 0) {
+          throw new Error('El monto no puede exceder el saldo restante');
+        }
+
+        button.disabled = true;
+        button.textContent = 'Registrando…';
+
+        const data = await requestJson('/pagos', {
+          method: 'POST',
+          body: JSON.stringify({
+            orderId: order.id,
+            customerEmail: order.customerEmail,
+            amount,
+            remainingBalance
+          })
+        });
+
+        setResult('register-payment-result', `✓ paymentId: ${data.paymentId}  remaining: ${data.remainingBalance}`);
+        document.getElementById('payment-amount').value = '';
+        await loadAll();
+      } catch (error) {
+        setResult('register-payment-result', `✗ ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Registrar pago';
+      }
+    }
+
+    async function updateOrderStatusAction(event) {
+      event.preventDefault();
+      const form = document.getElementById('update-status-form');
+      const button = form.querySelector('button[type="submit"]');
+
+      try {
+        const orderId = document.getElementById('status-order-select').value;
+        const status = document.getElementById('status-value-select').value;
+        if (!orderId) {
+          throw new Error('Selecciona una orden');
+        }
+
+        button.disabled = true;
+        button.textContent = 'Actualizando…';
+
+        const data = await requestJson('/ordenes/estatus', {
+          method: 'PUT',
+          body: JSON.stringify({ orderId, status })
+        });
+
+        setResult('update-status-result', `✓ orderId: ${data.orderId}  status: ${data.status}`);
+        await loadAll();
+      } catch (error) {
+        setResult('update-status-result', `✗ ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Actualizar estatus';
+      }
+    }
+
     function resetForm() {
       const form = document.getElementById('publish-form');
       form.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => i.value = '');
@@ -420,6 +1527,8 @@
     }
 
     // Init
+    ensureOrderProductSelections();
+    renderOrderProductRows();
     loadAll();
     startInterval();
     setInterval(loadHealth, 15000);

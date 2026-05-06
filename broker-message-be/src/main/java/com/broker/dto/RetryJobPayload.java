@@ -12,6 +12,7 @@ public class RetryJobPayload {
     private Map<String, Object> data;
     private StepStatus sendEmail;
     private StepStatus updateRetryJobs;
+    private StepStatus failureNotification;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
