@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -14,6 +12,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:7.0
+    container_name: broker-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,8 +83,12 @@ services:
   broker-message-be:
     build: .
     container_name: broker-message-be
+    env_file:
+      - ../.env
     depends_on:
       postgres:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -86,11 +101,6 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MAIL_HOST: smtp.gmail.com
       MAIL_PORT: 587
-      EMAIL_USER: ${EMAIL_USER}
-      EMAIL_PASS: ${EMAIL_PASS}
-      EMAIL_SUCCESS_TO: ${EMAIL_SUCCESS_TO}
-      EMAIL_FAILURE_TO: ${EMAIL_FAILURE_TO}
-      MONGODB_URI: ${MONGODB_URI}
       PAYMENT_ENDPOINT: http://mock-services/api/payments
       ORDER_ENDPOINT: http://mock-services/api/orders
       PRODUCT_ENDPOINT: http://mock-services/api/products
@@ -99,3 +109,4 @@ services:
 
 volumes:
   postgres_data:
+  mongo_data:

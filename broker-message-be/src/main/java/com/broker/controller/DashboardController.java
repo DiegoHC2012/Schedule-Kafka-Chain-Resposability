@@ -1,14 +1,23 @@
 package com.broker.controller;
 
 import com.broker.config.KafkaTopics;
+import com.broker.model.common.ShipmentStatus;
+import com.broker.model.order.OrderRecord;
+import com.broker.model.payment.PaymentRecord;
 import com.broker.model.RetryJob;
+import com.broker.model.shipment.ShipmentRecord;
+import com.broker.repository.order.OrderRecordRepository;
+import com.broker.repository.payment.PaymentRecordRepository;
 import com.broker.repository.RetryJobRepository;
+import com.broker.repository.shipment.ShipmentRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +28,9 @@ import java.util.UUID;
 public class DashboardController {
 
     private final RetryJobRepository retryJobRepository;
+    private final OrderRecordRepository orderRecordRepository;
+    private final PaymentRecordRepository paymentRecordRepository;
+    private final ShipmentRecordRepository shipmentRecordRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @GetMapping("/retry-jobs")
@@ -32,13 +44,52 @@ public class DashboardController {
 
     @GetMapping("/retry-jobs/stats")
     public Map<String, Long> getStats() {
+        long success = retryJobRepository.countByStatus("SUCCESS");
         return Map.of(
                 "total",     retryJobRepository.count(),
                 "pending",   retryJobRepository.countByStatus("PENDING"),
-                "completed", retryJobRepository.countByStatus("COMPLETED"),
+            "success",   success,
+            "completed", success,
                 "failed",    retryJobRepository.countByStatus("FAILED")
         );
     }
+
+        @GetMapping("/dashboard/module-stats")
+        public Map<String, Long> getModuleStats() {
+        return Map.of(
+            "ordersTotal", orderRecordRepository.count(),
+            "paymentsTotal", paymentRecordRepository.count(),
+            "shipmentsPaid", shipmentRecordRepository.countByStatus(ShipmentStatus.PAGADO),
+            "shipmentsSent", shipmentRecordRepository.countByStatus(ShipmentStatus.ENVIADO)
+        );
+        }
+
+        @GetMapping("/dashboard/orders")
+        public List<DashboardOrderView> getOrders(@RequestParam(defaultValue = "8") int size) {
+        return orderRecordRepository.findAll(PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent()
+            .stream()
+            .map(this::toDashboardOrderView)
+            .toList();
+        }
+
+        @GetMapping("/dashboard/payments")
+        public List<DashboardPaymentView> getPayments(@RequestParam(defaultValue = "8") int size) {
+        return paymentRecordRepository.findAll(PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent()
+            .stream()
+            .map(this::toDashboardPaymentView)
+            .toList();
+        }
+
+        @GetMapping("/dashboard/shipments")
+        public List<DashboardShipmentView> getShipments(@RequestParam(defaultValue = "8") int size) {
+        return shipmentRecordRepository.findAll(PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent()
+            .stream()
+            .map(this::toDashboardShipmentView)
+            .toList();
+        }
 
     @PostMapping("/kafka/publish")
     public Map<String, Object> publish(@RequestBody Map<String, Object> body) {
@@ -85,4 +136,69 @@ public class DashboardController {
     private String jsonNum(String value) {
         try { Double.parseDouble(value); return value; } catch (NumberFormatException e) { return "0"; }
     }
+
+        private DashboardOrderView toDashboardOrderView(OrderRecord order) {
+        return new DashboardOrderView(
+            order.getId(),
+            order.getCustomerEmail(),
+            order.getStatus().name(),
+            order.getTotalAmount(),
+            order.getRemainingBalance(),
+            order.getCreatedAt()
+        );
+        }
+
+        private DashboardPaymentView toDashboardPaymentView(PaymentRecord payment) {
+        return new DashboardPaymentView(
+            payment.getId(),
+            payment.getOrderId(),
+            payment.getCustomerEmail(),
+            payment.getAmount(),
+            payment.getRemainingBalance(),
+            payment.getCreatedAt()
+        );
+        }
+
+        private DashboardShipmentView toDashboardShipmentView(ShipmentRecord shipment) {
+        return new DashboardShipmentView(
+            shipment.getId(),
+            shipment.getOrderId(),
+            shipment.getPaymentId(),
+            shipment.getCustomerEmail(),
+            shipment.getStatus().name(),
+            shipment.getShippedAt(),
+            shipment.getCreatedAt()
+        );
+        }
+
+        public record DashboardOrderView(
+            UUID id,
+            String customerEmail,
+            String status,
+            BigDecimal totalAmount,
+            BigDecimal remainingBalance,
+            LocalDateTime createdAt
+        ) {
+        }
+
+        public record DashboardPaymentView(
+            UUID id,
+            UUID orderId,
+            String customerEmail,
+            BigDecimal amount,
+            BigDecimal remainingBalance,
+            LocalDateTime createdAt
+        ) {
+        }
+
+        public record DashboardShipmentView(
+            UUID id,
+            UUID orderId,
+            UUID paymentId,
+            String customerEmail,
+            String status,
+            LocalDateTime shippedAt,
+            LocalDateTime createdAt
+        ) {
+        }
 }
