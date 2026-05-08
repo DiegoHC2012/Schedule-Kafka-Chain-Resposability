@@ -522,6 +522,8 @@
     let refreshInterval = null;
     let allJobs = [];
     let dashboardOrders = [];
+    let paymentDashboardOrders = [];
+    let statusDashboardOrders = [];
     let dashboardProducts = [];
     let orderProductSelections = [];
     let loadAllInFlight = false;
@@ -993,39 +995,72 @@
       `).join('');
     }
 
-    function populateOrderActionSelects() {
+    function populatePaymentOrderSelect() {
       const paymentSelect = document.getElementById('payment-order-select');
-      const statusSelect = document.getElementById('status-order-select');
+      const paymentButton = document.querySelector('#register-payment-form button[type="submit"]');
       const paymentSelected = paymentSelect.value;
-      const statusSelected = statusSelect.value;
+      const payableOrders = paymentDashboardOrders;
 
-      if (!dashboardOrders.length) {
-        const empty = '<option value="">No orders available</option>';
+      if (!payableOrders.length) {
+        const empty = '<option value="">No hay ordenes pendientes por cobrar</option>';
         paymentSelect.innerHTML = empty;
-        statusSelect.innerHTML = empty;
+        paymentSelect.disabled = true;
+        if (paymentButton) {
+          paymentButton.disabled = true;
+        }
         syncPaymentFormFromSelectedOrder();
         return;
       }
 
-      const options = dashboardOrders.map(order => {
+      paymentSelect.disabled = false;
+      if (paymentButton && paymentButton.textContent === 'Registrar pago') {
+        paymentButton.disabled = false;
+      }
+
+      const options = payableOrders.map(order => {
         const label = `${shortId(order.id)} · ${order.customerEmail} · ${fmtMoney(order.remainingBalance)}`;
         return `<option value="${order.id}">${label}</option>`;
       }).join('');
 
       paymentSelect.innerHTML = options;
-      statusSelect.innerHTML = options;
-
-      paymentSelect.value = dashboardOrders.some(order => order.id === paymentSelected) ? paymentSelected : dashboardOrders[0].id;
-      statusSelect.value = dashboardOrders.some(order => order.id === statusSelected) ? statusSelected : dashboardOrders[0].id;
+      paymentSelect.value = payableOrders.some(order => order.id === paymentSelected) ? paymentSelected : payableOrders[0].id;
       syncPaymentFormFromSelectedOrder();
     }
 
-    function findSelectedOrder(orderId) {
-      return dashboardOrders.find(order => order.id === orderId) || null;
+    function populateStatusOrderSelect() {
+      const statusSelect = document.getElementById('status-order-select');
+      const statusButton = document.querySelector('#update-status-form button[type="submit"]');
+      const statusSelected = statusSelect.value;
+      const manageableOrders = statusDashboardOrders;
+
+      if (!manageableOrders.length) {
+        statusSelect.innerHTML = '<option value="">No hay ordenes pendientes por gestionar</option>';
+        statusSelect.disabled = true;
+        if (statusButton) {
+          statusButton.disabled = true;
+        }
+        return;
+      }
+
+      statusSelect.disabled = false;
+      if (statusButton && statusButton.textContent === 'Actualizar estatus') {
+        statusButton.disabled = false;
+      }
+
+      statusSelect.innerHTML = manageableOrders.map(order => {
+        const label = `${shortId(order.id)} · ${order.customerEmail} · ${order.status}`;
+        return `<option value="${order.id}">${label}</option>`;
+      }).join('');
+
+      statusSelect.value = manageableOrders.some(order => order.id === statusSelected) ? statusSelected : manageableOrders[0].id;
+    }
+
+    function findSelectedPaymentOrder(orderId) {
+      return paymentDashboardOrders.find(order => order.id === orderId) || null;
     }
 
     function syncPaymentFormFromSelectedOrder() {
-      const order = findSelectedOrder(document.getElementById('payment-order-select').value);
+      const order = findSelectedPaymentOrder(document.getElementById('payment-order-select').value);
       const emailInput = document.getElementById('payment-customer-email');
       const amountInput = document.getElementById('payment-amount');
 
@@ -1045,7 +1080,7 @@
     }
 
     function recomputePaymentRemaining() {
-      const order = findSelectedOrder(document.getElementById('payment-order-select').value);
+      const order = findSelectedPaymentOrder(document.getElementById('payment-order-select').value);
       const amountValue = Number(document.getElementById('payment-amount').value || 0);
       const remainingInput = document.getElementById('payment-remaining');
       const hint = document.getElementById('payment-balance-hint');
@@ -1210,12 +1245,33 @@
       try {
         const { payload: orders } = await fetchJson('/api/dashboard/orders?size=12', { timeoutMs: 3000 });
         dashboardOrders = orders;
-        populateOrderActionSelects();
         renderOrders(orders);
       } catch {
         document.getElementById('orders-table-body').innerHTML =
           '<tr><td colspan="4" class="text-center py-10 text-red-400/70">Error fetching orders</td></tr>';
       }
+    }
+
+    async function loadPayableOrders() {
+      try {
+        const { payload: orders } = await fetchJson('/api/dashboard/orders/payable?size=25', { timeoutMs: 3000 });
+        paymentDashboardOrders = Array.isArray(orders) ? orders : [];
+      } catch {
+        paymentDashboardOrders = [];
+      }
+
+      populatePaymentOrderSelect();
+    }
+
+    async function loadActionableOrders() {
+      try {
+        const { payload: orders } = await fetchJson('/api/dashboard/orders/actionable?size=25', { timeoutMs: 3000 });
+        statusDashboardOrders = Array.isArray(orders) ? orders : [];
+      } catch {
+        statusDashboardOrders = [];
+      }
+
+      populateStatusOrderSelect();
     }
 
     function renderOrders(orders) {
@@ -1301,7 +1357,7 @@
       icon.classList.add('spin');
 
       try {
-        await Promise.allSettled([loadHealth(), loadStats(), loadModuleStats(), loadProducts(), loadJobs(), loadOrders(), loadPayments(), loadShipments()]);
+        await Promise.allSettled([loadHealth(), loadStats(), loadModuleStats(), loadProducts(), loadJobs(), loadOrders(), loadPayableOrders(), loadActionableOrders(), loadPayments(), loadShipments()]);
       } finally {
         setTimeout(() => icon.classList.remove('spin'), 400);
         loadAllInFlight = false;
@@ -1450,7 +1506,7 @@
       const button = form.querySelector('button[type="submit"]');
 
       try {
-        const order = findSelectedOrder(document.getElementById('payment-order-select').value);
+        const order = findSelectedPaymentOrder(document.getElementById('payment-order-select').value);
         if (!order) {
           throw new Error('Selecciona una orden');
         }
@@ -1509,6 +1565,8 @@
 
         const data = await requestJson('/ordenes/estatus', {
           method: 'PUT',
+          timeoutMs: 15000,
+          timeoutMessage: 'Actualizar el estatus de la orden tardó demasiado. Intenta de nuevo en unos segundos.',
           body: JSON.stringify({ orderId, status })
         });
 

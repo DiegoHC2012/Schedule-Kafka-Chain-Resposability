@@ -1,6 +1,7 @@
 package com.broker.controller;
 
 import com.broker.config.KafkaTopics;
+import com.broker.model.common.OrderStatus;
 import com.broker.model.common.ShipmentStatus;
 import com.broker.model.order.OrderRecord;
 import com.broker.model.payment.PaymentRecord;
@@ -26,6 +27,9 @@ import java.util.UUID;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class DashboardController {
+
+    private static final List<OrderStatus> CLOSED_ORDER_STATUSES = List.of(OrderStatus.PAGADO, OrderStatus.CANCELADA);
+    private static final List<OrderStatus> PAYABLE_ORDER_STATUSES = List.of(OrderStatus.CREADA, OrderStatus.PENDIENTE_PAGO);
 
     private final RetryJobRepository retryJobRepository;
     private final OrderRecordRepository orderRecordRepository;
@@ -67,6 +71,24 @@ public class DashboardController {
         @GetMapping("/dashboard/orders")
         public List<DashboardOrderView> getOrders(@RequestParam(defaultValue = "8") int size) {
         return orderRecordRepository.findAll(PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent()
+            .stream()
+            .map(this::toDashboardOrderView)
+            .toList();
+        }
+
+        @GetMapping("/dashboard/orders/actionable")
+        public List<DashboardOrderView> getActionableOrders(@RequestParam(defaultValue = "25") int size) {
+        return orderRecordRepository.findByStatusNotIn(CLOSED_ORDER_STATUSES, PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent()
+            .stream()
+            .map(this::toDashboardOrderView)
+            .toList();
+        }
+
+        @GetMapping("/dashboard/orders/payable")
+        public List<DashboardOrderView> getPayableOrders(@RequestParam(defaultValue = "25") int size) {
+        return orderRecordRepository.findByStatusInAndRemainingBalanceGreaterThan(PAYABLE_ORDER_STATUSES, BigDecimal.ZERO, PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
             .getContent()
             .stream()
             .map(this::toDashboardOrderView)

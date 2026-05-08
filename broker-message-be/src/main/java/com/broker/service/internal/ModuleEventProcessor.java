@@ -29,8 +29,6 @@ public class ModuleEventProcessor {
 
     @Transactional
     public void processPaymentReceived(PaymentReceivedEvent event) {
-        emailNotificationPublisher.publishPaymentReceived(event.customerEmail(), event.orderId(), event.paymentId(), event.amount());
-
         OrderRecord order = orderRecordRepository.findById(Objects.requireNonNull(event.orderId(), "orderId is required"))
                 .orElseThrow(() -> new IllegalStateException("Orden no encontrada para el pago recibido"));
 
@@ -44,6 +42,7 @@ public class ModuleEventProcessor {
 
         OrderRecord savedOrder = orderRecordRepository.save(order);
         mongoBusinessSyncService.syncOrder(savedOrder);
+        emailNotificationPublisher.publishPaymentReceived(event.customerEmail(), event.orderId(), event.paymentId(), event.amount());
     }
 
     public void processInventoryUpdate(InventoryUpdateEvent event) {

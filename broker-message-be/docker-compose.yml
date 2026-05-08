@@ -35,6 +35,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
     ports:
       - "2181:2181"
 
@@ -114,3 +117,5 @@ volumes:
   postgres_data:
   mongo_data:
   kafka_data:
+  zookeeper_data:
+  zookeeper_log:
