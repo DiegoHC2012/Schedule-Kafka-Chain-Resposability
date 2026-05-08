@@ -9,6 +9,12 @@ El script scripts/retry-e2e.sh publica un evento en Kafka y monitorea el estado 
 - cambio a FAILED al agotar max_attempts
 - insercion en la tabla especifica del dominio
 
+
+### Fallo apropósito
+
+docker stop broker-mock-services
+docker start broker-mock-services
+
 ### Uso
 
 Desde la carpeta broker-message-be:
