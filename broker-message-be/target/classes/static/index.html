@@ -1471,6 +1471,8 @@
 
         const data = await requestJson('/pagos', {
           method: 'POST',
+          timeoutMs: 15000,
+          timeoutMessage: 'Registrar el pago tardó demasiado. Intenta de nuevo en unos segundos.',
           body: JSON.stringify({
             orderId: order.id,
             customerEmail: order.customerEmail,
