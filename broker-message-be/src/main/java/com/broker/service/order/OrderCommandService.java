@@ -2,6 +2,7 @@ package com.broker.service.order;
 
 import com.broker.chain.modules.order.OrderCreateContext;
 import com.broker.chain.modules.order.OrderCatalogValidationHandler;
+import com.broker.chain.modules.order.OrderCreateEmailNotificationHandler;
 import com.broker.chain.modules.order.OrderCreatePersistenceHandler;
 import com.broker.chain.modules.order.OrderCreateValidationHandler;
 import com.broker.chain.modules.order.OrderInventoryPublishHandler;
@@ -33,6 +34,7 @@ public class OrderCommandService {
     private final OrderCatalogValidationHandler orderCatalogValidationHandler;
     private final OrderCreatePersistenceHandler orderCreatePersistenceHandler;
     private final OrderInventoryPublishHandler orderInventoryPublishHandler;
+    private final OrderCreateEmailNotificationHandler orderCreateEmailNotificationHandler;
     private final OrderUpdateLookupHandler orderUpdateLookupHandler;
     private final OrderUpdateCatalogValidationHandler orderUpdateCatalogValidationHandler;
     private final OrderProductChangeDetectionHandler orderProductChangeDetectionHandler;
@@ -47,6 +49,7 @@ public class OrderCommandService {
         orderCreateValidationHandler.setNext(orderCatalogValidationHandler);
         orderCatalogValidationHandler.setNext(orderCreatePersistenceHandler);
         orderCreatePersistenceHandler.setNext(orderInventoryPublishHandler);
+        orderInventoryPublishHandler.setNext(orderCreateEmailNotificationHandler);
 
         orderUpdateLookupHandler.setNext(orderUpdateCatalogValidationHandler);
         orderUpdateCatalogValidationHandler.setNext(orderProductChangeDetectionHandler);

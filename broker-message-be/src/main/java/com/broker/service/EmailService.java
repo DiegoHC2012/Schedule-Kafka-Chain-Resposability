@@ -309,6 +309,15 @@ public class EmailService {
                     "Ya queda menos para estrenar tu compra.",
                     3
             );
+                case "order-created" -> new NotificationMeta(
+                  "Pedido recibido",
+                  "#2968c8",
+                  "#eef5ff",
+                  "Recibimos tu pedido",
+                  "Tu compra ya quedó registrada correctamente. El siguiente paso es que se acredite el pago para comenzar la preparación.",
+                  "Tu pedido ya existe en el sistema y está pendiente de pago.",
+                  1
+                );
             case "payment-pending" -> new NotificationMeta(
                     "Pago en revisión",
                     "#f59e0b",
@@ -507,6 +516,10 @@ public class EmailService {
         addRow(rows, "Total", payloadValue(payload, "totalAmount", ""));
 
         switch (template) {
+          case "order-created" -> {
+            addRow(rows, "Estado", payloadValue(payload, "statusLabel", payloadValue(payload, "orderStatusLabel", "")));
+            addRow(rows, "Saldo pendiente", payloadValue(payload, "remainingBalance", ""));
+          }
             case "payment-received" -> {
                 addRow(rows, "Pago", payloadValue(payload, "paymentId", ""));
                 addRow(rows, "Monto acreditado", payloadValue(payload, "amount", ""));

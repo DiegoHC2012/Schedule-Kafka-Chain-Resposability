@@ -46,6 +46,17 @@ public class EmailNotificationPublisher {
     }
 
     @Transactional(readOnly = true)
+    public void publishOrderCreated(String recipient, UUID orderId) {
+        OrderEmailSnapshot snapshot = loadSnapshot(orderId);
+        publish(new EmailNotificationEvent(
+                "order-created",
+                recipient,
+                "Recibimos tu pedido" + subjectSuffix(snapshot.itemsSummary()),
+                buildOrderCreatedPayload(orderId, snapshot)
+        ));
+    }
+
+    @Transactional(readOnly = true)
     public void publishShipmentConfirmation(ShipmentRecord shipmentRecord) {
         OrderEmailSnapshot snapshot = loadSnapshot(shipmentRecord.getOrderId());
         publish(new EmailNotificationEvent(
@@ -83,6 +94,14 @@ public class EmailNotificationPublisher {
         putIfPresent(payload, "paymentId", paymentId);
         putIfPresent(payload, "amount", formatMoney(amount));
         putIfPresent(payload, "momentLabel", "Pago acreditado");
+        return payload;
+    }
+
+    private Map<String, Object> buildOrderCreatedPayload(UUID orderId, OrderEmailSnapshot snapshot) {
+        Map<String, Object> payload = new LinkedHashMap<>(basePayload(orderId, snapshot));
+        putIfPresent(payload, "status", OrderStatus.PENDIENTE_PAGO.name());
+        putIfPresent(payload, "statusLabel", formatOrderStatus(OrderStatus.PENDIENTE_PAGO));
+        putIfPresent(payload, "momentLabel", "Pedido creado");
         return payload;
     }
 

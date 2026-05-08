@@ -5,6 +5,7 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/common/EndpointHandler.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/modules/order/OrderCatalogValidationHandler.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/modules/order/OrderCreateContext.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/modules/order/OrderCreateEmailNotificationHandler.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/modules/order/OrderCreatePersistenceHandler.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/modules/order/OrderCreateValidationHandler.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/chain/modules/order/OrderInventoryPublishHandler.java
