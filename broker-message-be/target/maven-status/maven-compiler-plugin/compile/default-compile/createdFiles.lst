@@ -50,3 +50,4 @@ com/broker/controller/DashboardController.class
 com/broker/model/ProductRetryJob.class
 com/broker/service/PaymentRetryService.class
 com/broker/chain/RetryContext.class
+com/broker/service/notifications/EmailNotificationPublisher$1.class

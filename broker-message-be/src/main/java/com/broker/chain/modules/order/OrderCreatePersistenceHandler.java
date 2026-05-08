@@ -2,6 +2,7 @@ package com.broker.chain.modules.order;
 
 import com.broker.chain.common.AbstractEndpointHandler;
 import com.broker.dto.order.OrderItemRequest;
+import com.broker.mongo.MongoBusinessSyncService;
 import com.broker.mongo.inventory.ProductInventoryDocument;
 import com.broker.model.common.OrderStatus;
 import com.broker.model.order.OrderItemRecord;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class OrderCreatePersistenceHandler extends AbstractEndpointHandler<OrderCreateContext> {
 
     private final OrderRecordRepository orderRecordRepository;
+    private final MongoBusinessSyncService mongoBusinessSyncService;
 
     @Override
     public void handle(OrderCreateContext context) {
@@ -33,7 +35,9 @@ public class OrderCreatePersistenceHandler extends AbstractEndpointHandler<Order
             orderRecord.addItem(itemRecord);
         }
 
-        context.setOrder(orderRecordRepository.save(orderRecord));
+        OrderRecord savedOrder = orderRecordRepository.save(orderRecord);
+        mongoBusinessSyncService.syncOrder(savedOrder);
+        context.setOrder(savedOrder);
         handleNext(context);
     }
 }

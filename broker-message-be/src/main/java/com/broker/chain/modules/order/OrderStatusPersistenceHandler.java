@@ -1,6 +1,7 @@
 package com.broker.chain.modules.order;
 
 import com.broker.chain.common.AbstractEndpointHandler;
+import com.broker.mongo.MongoBusinessSyncService;
 import com.broker.model.common.OrderStatus;
 import com.broker.repository.order.OrderRecordRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import java.util.Objects;
 public class OrderStatusPersistenceHandler extends AbstractEndpointHandler<OrderStatusUpdateContext> {
 
     private final OrderRecordRepository orderRecordRepository;
+    private final MongoBusinessSyncService mongoBusinessSyncService;
 
     @Override
     public void handle(OrderStatusUpdateContext context) {
@@ -22,6 +24,7 @@ public class OrderStatusPersistenceHandler extends AbstractEndpointHandler<Order
             context.getOrder().setRemainingBalance(BigDecimal.ZERO);
         }
         context.setOrder(orderRecordRepository.save(Objects.requireNonNull(context.getOrder(), "order is required")));
+        mongoBusinessSyncService.syncOrder(context.getOrder());
         handleNext(context);
     }
 }

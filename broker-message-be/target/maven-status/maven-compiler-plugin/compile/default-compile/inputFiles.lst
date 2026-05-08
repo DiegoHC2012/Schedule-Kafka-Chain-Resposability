@@ -70,6 +70,7 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/model/order/OrderRecord.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/model/payment/PaymentRecord.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/model/shipment/ShipmentRecord.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/MongoBusinessSyncService.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/MongoSyncService.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/OrderRetryJobDocument.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/OrderRetryJobMongoRepository.java
@@ -81,6 +82,12 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/RetryJobMongoRepository.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/inventory/ProductInventoryDocument.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/inventory/ProductInventoryRepository.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/order/OrderDocument.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/order/OrderMongoRepository.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/payment/PaymentDocument.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/payment/PaymentMongoRepository.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/shipment/ShipmentDocument.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/mongo/shipment/ShipmentMongoRepository.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/repository/OrderRetryJobRepository.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/repository/PaymentRetryJobRepository.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/repository/ProductRetryJobRepository.java

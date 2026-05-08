@@ -1,5 +1,6 @@
 package com.broker.service.shipment;
 
+import com.broker.mongo.MongoBusinessSyncService;
 import com.broker.model.common.ShipmentStatus;
 import com.broker.model.shipment.ShipmentRecord;
 import com.broker.repository.shipment.ShipmentRecordRepository;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class ShipmentService {
 
     private final ShipmentRecordRepository shipmentRecordRepository;
+    private final MongoBusinessSyncService mongoBusinessSyncService;
 
     @Transactional
     public ShipmentRecord createPaidShipmentIfAbsent(UUID orderId, UUID paymentId, String customerEmail) {
@@ -37,7 +39,9 @@ public class ShipmentService {
             shipmentRecord.setPaymentId(paymentId);
         }
 
-        return shipmentRecordRepository.save(shipmentRecord);
+        ShipmentRecord savedShipment = shipmentRecordRepository.save(shipmentRecord);
+        mongoBusinessSyncService.syncShipment(savedShipment);
+        return savedShipment;
     }
 
     @Transactional(readOnly = true)
@@ -50,6 +54,8 @@ public class ShipmentService {
         shipmentRecord.setStatus(ShipmentStatus.ENVIADO);
         shipmentRecord.setNotificationSent(true);
         shipmentRecord.setShippedAt(LocalDateTime.now());
-        return shipmentRecordRepository.save(shipmentRecord);
+        ShipmentRecord savedShipment = shipmentRecordRepository.save(shipmentRecord);
+        mongoBusinessSyncService.syncShipment(savedShipment);
+        return savedShipment;
     }
 }

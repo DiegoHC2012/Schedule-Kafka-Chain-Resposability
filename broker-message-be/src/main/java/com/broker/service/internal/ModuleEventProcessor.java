@@ -3,6 +3,7 @@ package com.broker.service.internal;
 import com.broker.dto.event.InventoryUpdateEvent;
 import com.broker.dto.event.OrderStatusChangedEvent;
 import com.broker.dto.event.PaymentReceivedEvent;
+import com.broker.mongo.MongoBusinessSyncService;
 import com.broker.model.common.OrderStatus;
 import com.broker.model.order.OrderRecord;
 import com.broker.repository.order.OrderRecordRepository;
@@ -21,6 +22,7 @@ import java.util.Objects;
 public class ModuleEventProcessor {
 
     private final OrderRecordRepository orderRecordRepository;
+    private final MongoBusinessSyncService mongoBusinessSyncService;
     private final EmailNotificationPublisher emailNotificationPublisher;
     private final ShipmentService shipmentService;
     private final InventoryProjectionService inventoryProjectionService;
@@ -40,7 +42,8 @@ public class ModuleEventProcessor {
             order.setStatus(OrderStatus.PENDIENTE_PAGO);
         }
 
-        orderRecordRepository.save(order);
+        OrderRecord savedOrder = orderRecordRepository.save(order);
+        mongoBusinessSyncService.syncOrder(savedOrder);
     }
 
     public void processInventoryUpdate(InventoryUpdateEvent event) {
