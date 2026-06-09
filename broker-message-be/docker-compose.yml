@@ -112,7 +112,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/broker_db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      MONGODB_URI: mongodb://mongo:27017/broker_db
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/broker_db}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MAIL_HOST: smtp.gmail.com
       MAIL_PORT: 587
