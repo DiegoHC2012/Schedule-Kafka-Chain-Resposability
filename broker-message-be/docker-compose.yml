@@ -40,12 +40,20 @@ services:
       - zookeeper_log:/var/lib/zookeeper/log
     ports:
       - "2181:2181"
+    healthcheck:
+      test: ["CMD", "cub", "zk-ready", "localhost:2181", "30"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: broker-kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
+    restart: on-failure
     ports:
       - "9092:9092"
     environment:
@@ -104,6 +112,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/broker_db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
+      MONGODB_URI: mongodb://mongo:27017/broker_db
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MAIL_HOST: smtp.gmail.com
       MAIL_PORT: 587
@@ -112,6 +121,17 @@ services:
       PRODUCT_ENDPOINT: http://mock-services/api/products
     ports:
       - "8080:8080"
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: broker-frontend
+    depends_on:
+      broker-message-be:
+        condition: service_started
+    ports:
+      - "3000:80"
 
 volumes:
   postgres_data:

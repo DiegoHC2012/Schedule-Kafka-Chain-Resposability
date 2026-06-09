@@ -38,6 +38,7 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/controller/order/OrderController.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/controller/payment/PaymentController.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/controller/product/ProductController.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/controller/shipment/ShipmentController.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/RetryJobPayload.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/event/EmailNotificationEvent.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/event/InventoryProductChangeEvent.java
@@ -45,6 +46,7 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/event/OrderStatusChangedEvent.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/event/PaymentReceivedEvent.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/order/OrderCreateRequest.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/order/OrderEditRequest.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/order/OrderItemRequest.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/order/OrderProductsUpdateRequest.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/order/OrderResponse.java
@@ -54,6 +56,8 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/payment/PaymentResponse.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/product/ProductCreateRequest.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/product/ProductResponse.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/product/ProductUpdateRequest.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/dto/shipment/ShipmentUpdateRequest.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/listener/OrderKafkaListener.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/listener/PaymentKafkaListener.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/listener/ProductKafkaListener.java
@@ -112,6 +116,7 @@
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/internal/ModuleEventProcessor.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/inventory/InventoryProjectionService.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/notifications/EmailNotificationPublisher.java
+/Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/order/OrderAdminService.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/order/OrderCommandService.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/payment/PaymentCommandService.java
 /Users/diegohc/Repositorios/Schedule-Kafka-Chain-Resposability/broker-message-be/src/main/java/com/broker/service/product/ProductCatalogService.java

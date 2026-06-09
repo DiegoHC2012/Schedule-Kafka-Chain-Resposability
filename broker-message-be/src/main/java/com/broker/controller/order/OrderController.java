@@ -1,22 +1,28 @@
 package com.broker.controller.order;
 
 import com.broker.dto.order.OrderCreateRequest;
+import com.broker.dto.order.OrderEditRequest;
 import com.broker.dto.order.OrderProductsUpdateRequest;
 import com.broker.dto.order.OrderResponse;
 import com.broker.dto.order.OrderStatusUpdateRequest;
 import com.broker.dto.order.OrderStatusUpdateResponse;
 import com.broker.retry.InternalRetryOperation;
 import com.broker.service.internal.InternalRetryJobService;
+import com.broker.service.order.OrderAdminService;
 import com.broker.service.order.OrderCommandService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/ordenes")
@@ -24,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderCommandService orderCommandService;
+    private final OrderAdminService orderAdminService;
     private final InternalRetryJobService internalRetryJobService;
 
     @PostMapping
@@ -54,5 +61,20 @@ public class OrderController {
             internalRetryJobService.recordEndpointFailure(InternalRetryOperation.ORDER_UPDATE_STATUS, "/ordenes/estatus", request, e);
             throw e;
         }
+    }
+
+    @PutMapping("/{orderId}")
+    public ResponseEntity<Void> editOrder(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody OrderEditRequest request
+    ) {
+        orderAdminService.updateOrder(orderId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable UUID orderId) {
+        orderAdminService.deleteOrder(orderId);
+        return ResponseEntity.noContent().build();
     }
 }

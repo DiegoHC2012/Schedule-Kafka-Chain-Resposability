@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -55,6 +58,42 @@ public class MongoBusinessSyncService {
         } catch (Exception e) {
             log.error("MongoDB sync failed for envios id={}: {}", shipment.getId(), e.getMessage(), e);
             throw new IllegalStateException("No se pudo sincronizar el envio en MongoDB", e);
+        }
+    }
+
+    public void deleteOrder(UUID orderId) {
+        try {
+            orderMongoRepository.deleteById(orderId.toString());
+            log.debug("MongoDB deleted ordenes id={}", orderId);
+        } catch (Exception e) {
+            log.error("MongoDB delete failed for ordenes id={}: {}", orderId, e.getMessage(), e);
+            throw new IllegalStateException("No se pudo eliminar la orden en MongoDB", e);
+        }
+    }
+
+    public void deletePayments(List<UUID> paymentIds) {
+        if (paymentIds == null || paymentIds.isEmpty()) {
+            return;
+        }
+
+        try {
+            paymentIds.stream()
+                    .map(UUID::toString)
+                    .forEach(paymentMongoRepository::deleteById);
+            log.debug("MongoDB deleted pagos ids={}", paymentIds);
+        } catch (Exception e) {
+            log.error("MongoDB delete failed for pagos ids={}: {}", paymentIds, e.getMessage(), e);
+            throw new IllegalStateException("No se pudieron eliminar los pagos en MongoDB", e);
+        }
+    }
+
+    public void deleteShipment(UUID shipmentId) {
+        try {
+            shipmentMongoRepository.deleteById(shipmentId.toString());
+            log.debug("MongoDB deleted envios id={}", shipmentId);
+        } catch (Exception e) {
+            log.error("MongoDB delete failed for envios id={}: {}", shipmentId, e.getMessage(), e);
+            throw new IllegalStateException("No se pudo eliminar el envio en MongoDB", e);
         }
     }
 }

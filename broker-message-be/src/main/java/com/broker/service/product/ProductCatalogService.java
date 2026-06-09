@@ -2,11 +2,14 @@ package com.broker.service.product;
 
 import com.broker.dto.product.ProductCreateRequest;
 import com.broker.dto.product.ProductResponse;
+import com.broker.dto.product.ProductUpdateRequest;
 import com.broker.mongo.inventory.ProductInventoryDocument;
 import com.broker.mongo.inventory.ProductInventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,6 +41,25 @@ public class ProductCatalogService {
 
         ProductInventoryDocument saved = productInventoryRepository.save(product);
         return toResponse(saved);
+    }
+
+    public void updateProduct(String productId, ProductUpdateRequest request) {
+        ProductInventoryDocument product = productInventoryRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+
+        product.setName(request.name().trim());
+        product.setImage(normalize(request.image()));
+        product.setAvailableQuantity(request.availableQuantity());
+        product.setUpdatedAt(LocalDateTime.now());
+
+        productInventoryRepository.save(product);
+    }
+
+    public void deleteProduct(String productId) {
+        ProductInventoryDocument product = productInventoryRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+
+        productInventoryRepository.delete(product);
     }
 
     private ProductResponse toResponse(ProductInventoryDocument product) {
