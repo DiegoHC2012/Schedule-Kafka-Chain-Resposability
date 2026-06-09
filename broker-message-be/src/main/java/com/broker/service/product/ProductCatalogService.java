@@ -5,6 +5,7 @@ import com.broker.dto.product.ProductResponse;
 import com.broker.dto.product.ProductUpdateRequest;
 import com.broker.mongo.inventory.ProductInventoryDocument;
 import com.broker.mongo.inventory.ProductInventoryRepository;
+import com.broker.repository.order.OrderRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.Objects;
 public class ProductCatalogService {
 
     private final ProductInventoryRepository productInventoryRepository;
+    private final OrderRecordRepository orderRecordRepository;
 
     public List<ProductResponse> listProducts() {
         return productInventoryRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
@@ -36,6 +38,7 @@ public class ProductCatalogService {
         product.setId(productId);
         product.setName(request.name());
         product.setImage(normalize(request.image()));
+        product.setPrice(request.price());
         product.setAvailableQuantity(request.availableQuantity());
         product.setUpdatedAt(LocalDateTime.now());
 
@@ -49,6 +52,7 @@ public class ProductCatalogService {
 
         product.setName(request.name().trim());
         product.setImage(normalize(request.image()));
+        product.setPrice(request.price());
         product.setAvailableQuantity(request.availableQuantity());
         product.setUpdatedAt(LocalDateTime.now());
 
@@ -59,11 +63,25 @@ public class ProductCatalogService {
         ProductInventoryDocument product = productInventoryRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
 
+        if (orderRecordRepository.existsByItemsProductId(productId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar el producto porque ya está asociado a una orden"
+            );
+        }
+
         productInventoryRepository.delete(product);
     }
 
     private ProductResponse toResponse(ProductInventoryDocument product) {
-        return new ProductResponse(product.getId(), product.getName(), product.getImage(), product.getAvailableQuantity(), product.getUpdatedAt());
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getImage(),
+                product.getPrice(),
+                product.getAvailableQuantity(),
+                product.getUpdatedAt()
+        );
     }
 
     private String normalize(String value) {

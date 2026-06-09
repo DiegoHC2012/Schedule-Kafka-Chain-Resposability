@@ -14,6 +14,8 @@ import java.util.UUID;
 
 public interface OrderRecordRepository extends JpaRepository<OrderRecord, UUID> {
 
+    boolean existsByItemsProductId(String productId);
+
     @EntityGraph(attributePaths = "items")
     Optional<OrderRecord> findWithItemsById(UUID id);
 

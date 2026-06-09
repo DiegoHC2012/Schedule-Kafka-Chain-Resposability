@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,6 +23,8 @@ public class ProductInventoryDocument {
     private String name;
 
     private String image;
+
+    private BigDecimal price;
 
     private Integer availableQuantity = 0;
 

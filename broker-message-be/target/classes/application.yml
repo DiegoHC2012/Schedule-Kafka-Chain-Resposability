@@ -75,3 +75,7 @@ management:
     mail:
       enabled: false
 
+server:
+  error:
+    include-message: always
+
